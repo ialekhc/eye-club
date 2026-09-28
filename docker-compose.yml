@@ -1,0 +1,76 @@
+name: virtual-eyewear
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: eyewear
+      POSTGRES_PASSWORD: eyewear
+      POSTGRES_DB: eyewear
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U eyewear -d eyewear"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+  api:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL: postgresql://eyewear:eyewear@postgres:5432/eyewear?schema=public
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:-development-only-change-me}
+      STORAGE_LOCAL_DIR: /app/.data/objects
+      PORT: 4000
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:4000:4000"
+    init: true
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4000/api/v1/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
+  seed:
+    profiles: ["seed"]
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL: postgresql://eyewear:eyewear@postgres:5432/eyewear?schema=public
+      SEED_OWNER_EMAIL: ${SEED_OWNER_EMAIL:-owner@example.test}
+      SEED_OWNER_PASSWORD: ${SEED_OWNER_PASSWORD:-change-this-local-password}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      api:
+        condition: service_healthy
+    command: ["pnpm", "exec", "prisma", "db", "seed"]
+    restart: "no"
+  web:
+    build:
+      context: .
+      dockerfile: client/Dockerfile
+    ports:
+      - "127.0.0.1:3000:3000"
+    init: true
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/try-on').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
+
+volumes:
+  postgres-data:

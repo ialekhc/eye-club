@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="360" viewBox="0 0 800 360">
+  <title>The Weekender — original Eye Club sample sunglasses</title>
+  <g stroke="#735c35" stroke-width="11" fill="#473a27" fill-opacity=".68">
+    <ellipse cx="212" cy="180" rx="147" ry="139"/>
+    <ellipse cx="588" cy="180" rx="147" ry="139"/>
+  </g>
+  <g fill="none" stroke-linecap="round">
+    <path d="M359 156c24-25 58-25 82 0M25 126l47 10m656 0 47-10" stroke="#735c35" stroke-width="12"/>
+    <path d="M370 141c19-11 41-11 60 0M84 111c29-50 80-74 129-73m374 0c49-1 100 23 129 73" stroke="#b6a171" stroke-width="3"/>
+    <path d="m335 174 13 33m117-33-13 33" stroke="#c6b991" stroke-opacity=".8" stroke-width="7"/>
+  </g>
+</svg>

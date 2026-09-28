@@ -1,0 +1,13 @@
+{
+  "name": "@eyewear/tryon-engine",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./face": "./src/face/FaceLandmarkDetector.ts"
+  },
+  "dependencies": {
+    "@mediapipe/tasks-vision": "1.0.1"
+  }
+}

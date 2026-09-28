@@ -1,0 +1,72 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: eyewear
+          POSTGRES_PASSWORD: eyewear
+          POSTGRES_DB: eyewear
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U eyewear -d eyewear"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=10
+    env:
+      DATABASE_URL: postgresql://eyewear:eyewear@localhost:5432/eyewear?schema=public
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run assets:setup
+      - run: npm test
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run build
+      - run: npm run build:widget
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+      - name: Run browser smoke tests
+        run: npm run test:e2e
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: apps/api/package.json
+      - run: pnpm --dir apps/api install --frozen-lockfile --ignore-workspace
+      - run: pnpm --dir apps/api exec prisma validate
+      - run: pnpm --dir apps/api exec prisma generate
+      - run: pnpm --dir apps/api exec prisma migrate deploy
+      - run: pnpm --dir apps/api exec tsc -p tsconfig.json --noEmit --pretty false
+      - run: pnpm --dir apps/api exec nest build
+      - name: Start API and verify readiness
+        run: |
+          (cd apps/api && PORT=4000 node dist/main.js > /tmp/eyewear-api.log 2>&1 &)
+          for attempt in $(seq 1 20); do
+            if curl --fail --silent http://127.0.0.1:4000/api/v1/health; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/eyewear-api.log
+          exit 1
+      - name: Seed demo organization
+        env:
+          SEED_OWNER_PASSWORD: ci-owner-password-123
+          SEED_SECOND_OWNER_PASSWORD: ci-second-owner-password-123
+        run: pnpm --dir apps/api exec prisma db seed
+      - name: Run API smoke test
+        env:
+          SEED_OWNER_PASSWORD: ci-owner-password-123
+          SEED_SECOND_OWNER_PASSWORD: ci-second-owner-password-123
+          SMOKE_ORGANIZATION_ID: demo-optical
+          SMOKE_SECOND_ORGANIZATION: second-optical
+        run: node scripts/api-smoke.mjs

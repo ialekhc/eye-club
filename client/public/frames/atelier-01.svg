@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="360" viewBox="0 0 1000 360">
+  <title>The Everyday — original Eye Club sample frame</title>
+  <defs>
+    <linearGradient id="rim" x1="0" y1="0" x2="0.1" y2="1"><stop stop-color="#333732"/><stop offset=".35" stop-color="#191c19"/><stop offset="1" stop-color="#2e302b"/></linearGradient>
+  </defs>
+  <g fill="none" stroke-linejoin="round">
+    <path d="M27 100 80 111M920 111l53-11" stroke="#1c201c" stroke-width="31"/>
+    <path d="M428 125c31-22 113-22 144 0" stroke="#232723" stroke-width="23"/>
+    <path d="M75 105c49-23 245-24 330-3 20 5 34 15 31 44l-13 83c-6 40-19 60-62 67-44 7-142 6-190-1-38-6-60-21-70-57L76 153c-7-25-10-37-1-48Z" stroke="url(#rim)" stroke-width="25"/>
+    <path d="M925 105c-49-23-245-24-330-3-20 5-34 15-31 44l13 83c6 40 19 60 62 67 44 7 142 6 190-1 38-6 60-21 70-57l25-85c7-25 10-37 1-48Z" stroke="url(#rim)" stroke-width="25"/>
+    <path d="M84 101c76-17 230-19 318 1M598 102c88-20 242-18 318-1" stroke="#666a5f" stroke-opacity=".7" stroke-width="3" stroke-linecap="round"/>
+    <path d="M110 236c9 33 29 47 63 52 55 8 143 8 185 1M890 236c-9 33-29 47-63 52-55 8-143 8-185 1" stroke="#595d52" stroke-opacity=".6" stroke-width="2"/>
+    <path d="M450 124c24-9 76-9 100 0" stroke="#656b5f" stroke-width="2"/>
+  </g>
+  <g fill="#aaa999"><rect x="80" y="114" width="18" height="6" rx="3"/><rect x="902" y="114" width="18" height="6" rx="3"/></g>
+</svg>
