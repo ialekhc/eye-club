@@ -4,10 +4,11 @@ import { useEffect, useRef, useState, type ChangeEvent, type DragEvent } from "r
 import Image from "next/image";
 import { ArrowRight, Check, CircleHelp, Eye, ImagePlus, LoaderCircle, LockKeyhole, RotateCcw, ScanFace, ShieldCheck, Upload, X, SlidersHorizontal, Plus } from "lucide-react";
 import { Button } from "@eyewear/ui";
-import { useTryOn, type TryOnStatus } from "@/hooks/use-try-on";
+import { useTryOn, type TryOnStatus } from "@/features/try-on/hooks/use-try-on";
+import { LiveTryOn } from "./live-try-on";
 import { FrameDetails } from "./frame-details";
 import { PhotoGuide } from "./photo-guide";
-import { useFrameLibrary } from "@/hooks/use-frame-library";
+import { useFrameLibrary } from "@/features/try-on/hooks/use-frame-library";
 import { importFrame } from "@/lib/frame-assets";
 import type { LoadedFrame } from "@/lib/frame-schema";
 import { CalibrationDialog } from "./calibration-dialog";
@@ -34,6 +35,7 @@ function FaceIllustration() {
 
 export function TryOnStudio() {
   const library = useFrameLibrary();
+  const [mode, setMode] = useState<"live" | "photo">("live");
   const { canvasRef, status, error, debug, geometry, upload, reset, toggleDebug, adjustment, setAdjustment, resetFit, previewCalibration } = useTryOn(library.selected);
   const [editor, setEditor] = useState<{ frame: LoadedFrame; isNew: boolean } | null>(null);
   const [importing, setImporting] = useState(false);
@@ -100,8 +102,8 @@ export function TryOnStudio() {
     <main id="studio" className="studio-shell">
       <div className="page-heading"><div><p className="eyebrow flex items-center gap-2"><span className="size-1.5 rounded-full bg-emerald-800" />Your personal fitting room</p>
         <h1>Your next frame, <span>on you.</span></h1><p className="page-description">A little less guessing. A whole new way to find your look.</p></div>
-        <span className="phase-label">PHOTO TRY-ON <span>01</span></span></div>
-      <ol className="steps" aria-label="Try-on progress">{["Add your photo", "Find your fit", "See your look"].map((label, index) => {
+        <span className="phase-label">LIVE + PHOTO TRY-ON <span>01</span></span></div>
+      <ol className="steps" aria-label="Try-on progress">{(mode === "live" ? ["Start your camera", "Choose a frame", "Move and explore"] : ["Add your photo", "Find your fit", "See your look"]).map((label, index) => {
         const done = ready || (busy && index === 0);
         const current = ready ? index === 2 : busy ? index === 1 : index === 0;
         return <li key={label} className={current || done ? "step active" : "step"} aria-current={current ? "step" : undefined}>
@@ -109,8 +111,13 @@ export function TryOnStudio() {
       })}</ol>
 
       <input ref={inputRef} type="file" accept="image/jpeg,image/png,image/webp" capture="user" onChange={onChange} className="sr-only" tabIndex={-1} aria-label="Take or choose your face photo" disabled={busy || !library.selected || importing} />
+      <div className="collection-actions" role="group" aria-label="Try-on mode">
+        <Button aria-pressed={mode === "live"} onClick={() => { reset(); setMode("live"); }}>Live camera</Button>
+        <Button aria-pressed={mode === "photo"} onClick={() => setMode("photo")}>Photo upload</Button>
+      </div>
       <div className="studio-grid">
-        <section className="preview-panel" aria-label="Virtual try-on preview">
+        {mode === "live" && <LiveTryOn frame={library.selected} />}
+        <section style={{ display: mode === "photo" ? undefined : "none" }} className="preview-panel" aria-label="Virtual try-on preview">
           <div className="preview-toolbar"><span className="flex items-center gap-2 text-xs font-medium"><span className={`size-1.5 rounded-full ${ready ? "bg-emerald-600" : "bg-stone-300"}`} />{ready ? "Your fitting preview" : "Your photo"}</span>
             <div className="flex items-center gap-1"><Button variant="ghost" size="sm" onClick={choosePhoto} disabled={busy || !library.selected || importing}><ImagePlus />{ready ? "Change photo" : "Add photo"}</Button>
               {(ready || busy || status === "error") && <Button variant="ghost" size="icon" onClick={() => { reset(); setDropError(""); }} aria-label={busy ? "Cancel photo processing" : "Remove photo and reset"}>{busy ? <X /> : <RotateCcw />}</Button>}</div></div>
@@ -144,7 +151,7 @@ export function TryOnStudio() {
           <div className="frame-card-image"><Image src={frame.source} alt="" width={frame.width} height={frame.height} unoptimized />{library.selected?.id === frame.id && <span className="selected-check"><Check size={11} /></span>}</div>
           <div><h3>{frame.name}</h3><p>{frame.color} · {frame.shape}</p></div>
         </button>)}</div>{compareMode && <div className="compare-panel"><p className="eyebrow">Side-by-side comparison · choose up to two frames</p><div className="compare-grid">{compareIds.map((id) => { const frame = library.frames.find((item) => item.id === id); return frame ? <article key={frame.id}><Image src={frame.source} alt={frame.name} width={frame.width} height={frame.height} unoptimized /><h3>{frame.name}</h3><p>{frame.color} · {frame.shape}</p></article> : null; })}</div></div>}
-        <p className="editor-hint">Two original samples, plus your transparent PNG/WebP frames. Calibrations are saved in this browser; photos are never saved.</p>
+        <p className="editor-hint">Twelve original samples, plus your transparent PNG/WebP frames. Calibrations are saved in this browser; photos are never saved.</p>
         {(library.error || frameError) && <p role="alert" className="error-message">{frameError || library.error}</p>}
         {notice && <p role="status" className="save-notice">{notice}</p>}
         {library.removable && <div className="local-frame-removal">{confirmRemoval ? <>

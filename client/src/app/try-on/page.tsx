@@ -1,2 +1,2 @@
-import { TryOnStudio } from "@/components/try-on/try-on-studio";
+import { TryOnStudio } from "@/features/try-on/components/try-on-studio";
 export default function TryOnPage() { return <TryOnStudio />; }

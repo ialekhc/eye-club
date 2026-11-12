@@ -1,7 +1,7 @@
 import type { FaceLandmarker } from "@mediapipe/tasks-vision";
 import type { Landmark } from "../types";
 
-export interface DetectorConfiguration { wasmPath: string; modelPath: string }
+export interface DetectorConfiguration { wasmPath: string; modelPath: string; runningMode?: "IMAGE" | "VIDEO" }
 export interface LandmarkDetector {
   initialize(): Promise<void>;
   detect(image: HTMLCanvasElement): readonly (readonly Landmark[])[];
@@ -28,7 +28,7 @@ export class FaceLandmarkDetector implements LandmarkDetector {
     const files = await FilesetResolver.forVisionTasks(this.configuration.wasmPath);
     const landmarker = await FaceLandmarker.createFromOptions(files, {
       baseOptions: { modelAssetPath: this.configuration.modelPath, delegate: "CPU" },
-      runningMode: "IMAGE",
+      runningMode: this.configuration.runningMode ?? "IMAGE",
       // A limit of one would hide additional faces instead of rejecting them.
       numFaces: 2,
       minFaceDetectionConfidence: 0.6,
@@ -43,6 +43,11 @@ export class FaceLandmarkDetector implements LandmarkDetector {
   detect(image: HTMLCanvasElement): readonly (readonly Landmark[])[] {
     if (!this.landmarker) throw new Error("Face detector is not ready.");
     return this.landmarker.detect(image).faceLandmarks;
+  }
+
+  detectVideo(video: HTMLVideoElement, timestamp: number): readonly (readonly Landmark[])[] {
+    if (!this.landmarker) throw new Error("Face detector is not ready.");
+    return this.landmarker.detectForVideo(video, timestamp).faceLandmarks;
   }
 
   dispose(): void {

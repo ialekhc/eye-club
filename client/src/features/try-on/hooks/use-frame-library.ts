@@ -55,9 +55,24 @@ export function useFrameLibrary() {
         try {
           const response = await fetch(sample.source);
           if (!response.ok) throw new Error(`Could not load ${sample.name}.`);
-          const blob = await response.blob();
+          let blob = await response.blob();
           const image = await loadFrame(sample.source);
-          loaded.push({ ...sample, image, source: sample.source, assetHash: "0".repeat(64), version: 1, blob });
+          // Built-in vector artwork renders directly, but local storage accepts raster assets.
+          if (sample.source.endsWith(".svg")) {
+            const canvas = document.createElement("canvas");
+            canvas.width = sample.width; canvas.height = sample.height;
+            const context = canvas.getContext("2d");
+            if (!context) throw new Error("Canvas is unavailable.");
+            context.drawImage(image, 0, 0);
+            try {
+              blob = await new Promise<Blob>((resolve, reject) => canvas.toBlob((result) => {
+                if (result) resolve(result); else reject(new Error("Could not prepare the sample frame."));
+              }, "image/png"));
+            } finally { canvas.width = 0; canvas.height = 0; }
+          }
+          const digest = await crypto.subtle.digest("SHA-256", await blob.arrayBuffer());
+          const assetHash = Array.from(new Uint8Array(digest), (value) => value.toString(16).padStart(2, "0")).join("");
+          loaded.push({ ...sample, image, source: sample.source, assetHash, version: 1, blob });
         } catch (cause) { issues.push(cause instanceof Error ? cause.message : "A sample frame could not load."); }
       }
       for (const record of saved) {
