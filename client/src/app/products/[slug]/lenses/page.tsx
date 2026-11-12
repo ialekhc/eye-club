@@ -1,6 +1,6 @@
 import { fetchProductBySlug, fetchLensTypes } from "@/lib/api";
 import { notFound } from "next/navigation";
-import { LensWizard } from "@/components/optical/LensWizard";
+import { LensWizard } from "@/features/lenses/components/LensWizard";
 
 export default async function LensesPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
