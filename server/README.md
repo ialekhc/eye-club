@@ -16,8 +16,8 @@ Apply the initial schema and optional demo account with:
 
 ```sh
 export DATABASE_URL='postgresql://eyewear:eyewear@localhost:5432/eyewear?schema=public'
-pnpm --dir apps/api exec prisma migrate deploy
-SEED_OWNER_PASSWORD='change-this-demo-password' pnpm --dir apps/api prisma:seed
+pnpm --dir server exec prisma migrate deploy
+SEED_OWNER_PASSWORD='change-this-demo-password' pnpm --dir server prisma:seed
 ```
 
 The seed requires a password of at least 12 characters and is intended for local development only. See [the architecture plan](../../docs/architecture.md).

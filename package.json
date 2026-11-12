@@ -16,11 +16,11 @@
     "build": "npm run build --workspace=@eyewear/web",
     "start": "npm run start --workspace=@eyewear/web",
     "lint": "eslint . --max-warnings=0",
-    "typecheck": "tsc -p packages/tryon-engine/tsconfig.json --noEmit && tsc -p packages/ui/tsconfig.json --noEmit && tsc -p apps/web/tsconfig.json --noEmit && tsc -p apps/widget/tsconfig.json --noEmit",
+    "typecheck": "tsc -p packages/tryon-engine/tsconfig.json --noEmit && tsc -p packages/ui/tsconfig.json --noEmit && tsc -p client/tsconfig.json --noEmit && tsc -p packages/widget/tsconfig.json --noEmit",
     "test": "vitest run",
     "assets:setup": "node scripts/setup-vision.mjs",
-    "build:widget": "npm run build --workspace=@eyewear/widget"
-    ,"test:e2e": "playwright test"
+    "build:widget": "npm run build --workspace=@eyewear/widget",
+    "test:e2e": "playwright test"
   },
   "devDependencies": {
     "@types/node": "22.20.3",

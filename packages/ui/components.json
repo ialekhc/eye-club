@@ -3,7 +3,7 @@
   "style": "new-york",
   "rsc": true,
   "tsx": true,
-  "tailwind": { "config": "", "css": "../../apps/web/src/app/globals.css", "baseColor": "neutral", "cssVariables": true },
+  "tailwind": { "config": "", "css": "../../client/src/app/globals.css", "baseColor": "neutral", "cssVariables": true },
   "aliases": { "components": "@eyewear/ui", "utils": "@eyewear/ui/utils", "ui": "@eyewear/ui" },
   "iconLibrary": "lucide"
 }

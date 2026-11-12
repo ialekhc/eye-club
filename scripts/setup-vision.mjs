@@ -7,7 +7,7 @@ import { fileURLToPath } from "node:url";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const require = createRequire(import.meta.url);
 const visionRoot = path.dirname(require.resolve("@mediapipe/tasks-vision"));
-const publicRoot = path.join(root, "apps/web/public");
+const publicRoot = path.join(root, "client/public");
 const modelUrl = "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task";
 const modelPath = path.join(publicRoot, "models/face_landmarker.task");
 const expectedHash = "64184e229b263107bc2b804c6625db1341ff2bb731874b0bcc2fe6544e0bc9ff";
