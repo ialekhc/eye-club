@@ -1,6 +1,6 @@
 import { fetchProducts, fetchBrands } from "@/lib/api";
-import { ProductCard } from "@/components/catalog/ProductCard";
-import { ProductFilters } from "@/components/catalog/ProductFilters";
+import { ProductCard } from "@/features/catalog/components/ProductCard";
+import { ProductFilters } from "@/features/catalog/components/ProductFilters";
 import { notFound } from "next/navigation";
 
 export const revalidate = 60; // Revalidate every 60 seconds
