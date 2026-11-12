@@ -10,13 +10,13 @@ The repository also contains the merchant foundation: a NestJS API, PostgreSQL/P
 - Brand and category filters
 - Product favorites and a client-side shopping bag
 - Checkout handoff placeholder ready for Stripe, Shopify, or brand-owned checkout
-- Private photo try-on at `/try-on`
+- Live camera mirror and private photo try-on at `/try-on`
 - On-device MediaPipe face detection and frame fitting
 - Merchant catalogue management at `/dashboard/products`
 - Multi-tenant API and PostgreSQL schema for products, brands, categories, assets, and memberships
 - Docker Compose services for PostgreSQL, API, and web
 
-The storefront currently uses the two included sample frame assets so it works immediately without a database. The API-backed public catalogue is available for a merchant collection through `/?organization=<organization-slug>`.
+The storefront currently uses the 12 included sample frame assets so it works immediately without a database. The API-backed public catalogue is available for a merchant collection through `/?organization=<organization-slug>`.
 
 ## Requirements
 
@@ -59,7 +59,7 @@ node scripts/render-sample-frame.mjs
 
 ## Environment variables
 
-The storefront demo has working defaults. For API-backed catalogue data, create `apps/web/.env.local`:
+The storefront demo has working defaults. For API-backed catalogue data, create `client/.env.local`:
 
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:4000
@@ -132,12 +132,12 @@ The smoke test covers login, organization access, tenant rejection, product list
 ## Repository layout
 
 ```text
-apps/web/                 Next.js storefront, try-on studio, merchant pages
-apps/api/                 NestJS tenant API and Prisma integration
-apps/api/prisma/          PostgreSQL schema, migrations, and seed
+client/                 Next.js storefront, try-on studio, merchant pages
+server/                 NestJS tenant API and Prisma integration
+server/prisma/          PostgreSQL schema, migrations, and seed
 packages/tryon-engine/    Pure geometry, calibration, face adapter, renderer
 packages/ui/              Shared UI components
-apps/widget/              Embeddable storefront/try-on widget boundary
+packages/widget/              Embeddable storefront/try-on widget boundary
 scripts/                  Asset setup, rendering, and API smoke checks
 docs/                     Architecture and validation records
 ```
@@ -145,3 +145,4 @@ docs/                     Architecture and validation records
 ## Privacy
 
 Customer photos are processed in browser memory. There is no photo upload endpoint in the try-on flow, no photo persistence, and no external face inference service. Virtual placement is an approximate visual preview, not a physical measurement or guarantee of fit.
+Live camera mode requires HTTPS (or localhost) and camera permission. Start the camera on `/try-on`, then select frames from the collection. Tracking runs locally in VIDEO mode. Stop, switch to photo mode, hide the page, or leave the route to release the camera. Current assets provide a 2D frontal overlay, not full 3D occlusion.

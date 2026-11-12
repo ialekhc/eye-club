@@ -1,8 +1,18 @@
-# Virtual Eyewear architecture
+# Eye Club architecture
 
-## Implemented boundary: Phase 1
+## Feature modules and service boundaries
 
-`apps/web` owns the interface, file validation and request lifecycle. `packages/tryon-engine` owns reusable math and rendering. Its pure entry point never imports React, Next.js or MediaPipe. The detector is a separate optional entry point, loaded after a user supplies an image. The Canvas renderer is behind `FrameRenderer`; alternate renderers can consume the same transform without changing face geometry.
+The web (`client`) and NestJS API (`server`) are independently deployable services; PostgreSQL owns persistent commerce data. The API groups catalog, cart, orders, lenses, prescriptions, users, admin, stores and appointments into Nest modules. These share one database and deployment today: this is a modular backend, not independently deployed microservices per domain.
+
+Frontend routes are thin entry points. Domain UI lives in `client/src/features/{catalog,lenses,storefront,try-on}`. Try-on components and hooks stay together; shared layout, auth providers and reusable libraries remain outside the feature folders. `packages/tryon-engine` is framework-independent geometry/rendering with a separately imported MediaPipe adapter. `packages/widget` reuses this engine.
+
+Live inference deliberately runs in the browser rather than a network service. `/try-on` offers live camera and photo modes. Camera permission is requested only after Start. A VIDEO-mode detector consumes each new video frame once; original transparent frame assets follow eye translation, scale and roll. Frame selection changes the overlay without restarting the stream. Missing/multiple faces clear the overlay. Stop, mode switch, hidden document and unmount release tracks and the detector, including pending startup requests. No camera frames or landmarks go to the API.
+
+The model pipeline uses face landmarks → geometry → calibrated frame transform → canvas composition. It is not a multi-generative-model system. Current assets provide a 2D frontal overlay, with no 3D temples, depth occlusion or guaranteed physical sizing. Inference currently runs on the main thread; target-device frame rate must be measured before making performance claims.
+
+Catalog and order services can be extracted later with versioned contracts, separate data ownership and reliable events when scaling or team ownership calls for it. Adding a remote face-inference service would add latency and transfer sensitive camera imagery without improving the current use case.
+
+## Geometry and data model reference
 
 MediaPipe detects iris centers (468, 473), nose bridge (168) and temple boundaries (234, 454). Names left/right refer to **image** coordinates. Convert normalized landmarks to the actual raster's pixel coordinates before calculating distance or angle. Working in normalized x/y space would produce the wrong rotation for portrait or landscape images.
 
