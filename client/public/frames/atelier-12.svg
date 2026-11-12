@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="360" viewBox="0 0 1000 360">
+<title>The Summit — original Eye Club sample frame</title><defs><linearGradient id="lens" x2="0" y2="1"><stop stop-color="#162a32" stop-opacity=".88"/><stop offset="1" stop-color="#577368" stop-opacity=".64"/></linearGradient></defs>
+<g stroke="#a46a42" stroke-width="12" stroke-linejoin="round" stroke-linecap="round" fill="none">
+<path d="M36 114 L104 127 M896 127 L964 114"/>
+<path d="M417 141 Q500 103 583 141"/>
+<path d="M108 107 Q252 68 404 105 Q426 133 401 220 Q376 294 263 294 Q147 294 121 222 Q99 156 108 107Z" fill="url(#lens)"/>
+<path d="M108 107 Q252 68 404 105 Q426 133 401 220 Q376 294 263 294 Q147 294 121 222 Q99 156 108 107Z" transform="translate(1000 0) scale(-1 1)" fill="url(#lens)"/>
+<path d="M105 108 Q260 58 410 107 M590 107 Q740 58 895 108" stroke="#292d2a" stroke-width="28"/></g>
+<g fill="#e4d8bc"><rect x="111" y="121" width="17" height="5" rx="2"/><rect x="872" y="121" width="17" height="5" rx="2"/></g>
+</svg>

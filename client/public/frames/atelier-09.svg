@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="360" viewBox="0 0 1000 360">
+<title>The Prism — original Eye Club sample frame</title><defs><linearGradient id="lens" x2="0" y2="1"><stop stop-color="#162a32" stop-opacity=".88"/><stop offset="1" stop-color="#577368" stop-opacity=".64"/></linearGradient></defs>
+<g stroke="#9da9b3" stroke-width="9" stroke-linejoin="round" stroke-linecap="round" fill="none">
+<path d="M36 114 L104 127 M896 127 L964 114"/>
+<path d="M417 141 Q500 103 583 141"/>
+<path d="M167 62 H351 L423 177 L351 298 H167 L95 177Z" fill="none"/>
+<path d="M167 62 H351 L423 177 L351 298 H167 L95 177Z" transform="translate(1000 0) scale(-1 1)" fill="none"/>
+</g>
+<g fill="#e4d8bc"><rect x="111" y="121" width="17" height="5" rx="2"/><rect x="872" y="121" width="17" height="5" rx="2"/></g>
+</svg>

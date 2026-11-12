@@ -28,4 +28,26 @@ export const SAMPLE_FRAMES = [SAMPLE_FRAME, {
     leftAnchorX: .265, leftAnchorY: .5, rightAnchorX: .735, rightAnchorY: .5,
     bridgeX: .5, bridgeY: .4, scaleMultiplier: 1, offsetX: 0, offsetY: 0, rotationOffset: 0,
   },
-}] as const;
+},
+  ...[
+    ["03", "The Scholar", "Brushed gold", "Round optical"],
+    ["04", "The Skyline", "Gunmetal", "Aviator sunglasses"],
+    ["05", "The Muse", "Burgundy", "Cat eye optical"],
+    ["06", "The Metro", "Navy blue", "Rectangle optical"],
+    ["07", "The Coast", "Honey amber", "Square sunglasses"],
+    ["08", "The Poet", "Forest green", "Panto optical"],
+    ["09", "The Prism", "Silver", "Hexagon optical"],
+    ["10", "The Eclipse", "Onyx black", "Oval sunglasses"],
+    ["11", "The Bloom", "Rose crystal", "Butterfly optical"],
+    ["12", "The Summit", "Copper", "Browline sunglasses"],
+  ].map(([number, name, color, shape]) => ({
+    id: `atelier-${number}`, name: name!, collection: `Atelier / ${number}`,
+    color: color!, shape: shape!, source: `/frames/atelier-${number}.svg`,
+    width: 1000, height: 360,
+    calibration: {
+      leftAnchorX: .26, leftAnchorY: .5, rightAnchorX: .74, rightAnchorY: .5,
+      bridgeX: .5, bridgeY: .35, scaleMultiplier: 1,
+      offsetX: 0, offsetY: 0, rotationOffset: 0,
+    } satisfies FrameCalibration,
+  })),
+] as const;

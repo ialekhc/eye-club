@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="360" viewBox="0 0 1000 360">
+<title>The Coast — original Eye Club sample frame</title><defs><linearGradient id="lens" x2="0" y2="1"><stop stop-color="#162a32" stop-opacity=".88"/><stop offset="1" stop-color="#577368" stop-opacity=".64"/></linearGradient></defs>
+<g stroke="#b9752f" stroke-width="26" stroke-linejoin="round" stroke-linecap="round" fill="none">
+<path d="M36 114 L104 127 M896 127 L964 114"/>
+<path d="M417 141 Q500 103 583 141"/>
+<path d="M115 73 Q259 44 399 77 Q425 90 415 136 L400 266 Q391 298 355 301 H166 Q124 298 115 264 L96 127 Q92 85 115 73Z" fill="url(#lens)"/>
+<path d="M115 73 Q259 44 399 77 Q425 90 415 136 L400 266 Q391 298 355 301 H166 Q124 298 115 264 L96 127 Q92 85 115 73Z" transform="translate(1000 0) scale(-1 1)" fill="url(#lens)"/>
+</g>
+<g fill="#e4d8bc"><rect x="111" y="121" width="17" height="5" rx="2"/><rect x="872" y="121" width="17" height="5" rx="2"/></g>
+</svg>
