@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { HttpException } from "@nestjs/common";
-import { PublicRateLimitGuard } from "./rate-limit.guard";
+import { PublicRateLimitGuard } from "./rate-limit.guard.js";
 
 describe("PublicRateLimitGuard", () => {
   it("rejects requests after the configured window limit", async () => {

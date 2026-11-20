@@ -1,7 +1,7 @@
 import { Controller, Get, Param } from '@nestjs/common';
-import { LensesService } from './lenses.service';
+import { LensesService } from './lenses.service.js';
 
-@Controller('api/v1/lenses')
+@Controller('lenses')
 export class LensesController {
   constructor(private readonly lensesService: LensesService) {}
 

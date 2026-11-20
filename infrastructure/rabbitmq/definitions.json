@@ -1,0 +1,32 @@
+{
+  "exchanges": [
+    {
+      "name": "eyeclub.domain.events",
+      "type": "topic",
+      "durable": true
+    },
+    {
+      "name": "eyeclub.domain.dlx",
+      "type": "direct",
+      "durable": true
+    }
+  ],
+  "queues": [
+    {
+      "name": "reporting.domain.events.q",
+      "durable": true,
+      "arguments": {
+        "x-dead-letter-exchange": "eyeclub.domain.dlx",
+        "x-dead-letter-routing-key": "reporting.dlq"
+      }
+    },
+    {
+      "name": "inventory.stock.events.q",
+      "durable": true,
+      "arguments": {
+        "x-dead-letter-exchange": "eyeclub.domain.dlx",
+        "x-dead-letter-routing-key": "inventory.dlq"
+      }
+    }
+  ]
+}

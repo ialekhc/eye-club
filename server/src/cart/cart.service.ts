@@ -1,76 +1,28 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../prisma.service';
-
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { PrismaService } from '../prisma.service.js';
+import { CartItemDto } from '../commerce.dto.js';
 @Injectable()
 export class CartService {
   constructor(private readonly prisma: PrismaService) {}
-
   async getCart(userId: string) {
-    const cart = await this.prisma.cart.findUnique({
-      where: { userId },
-      include: {
-        items: {
-          include: {
-            product: true,
-            variant: {
-              include: { images: true }
-            },
-            lensPackage: true,
-            prescription: true
-          }
-        }
-      }
-    });
-    return cart ? cart.items : [];
+    return (await this.prisma.cart.findUnique({ where: { userId }, include: { items: { include: { product: true, variant: { include: { images: true } }, lensPackage: true, prescription: true }, orderBy: { createdAt: 'asc' } } } }))?.items ?? [];
   }
-
-  async addToCart(userId: string, data: any) {
-    let cart = await this.prisma.cart.findUnique({ where: { userId } });
-    if (!cart) {
-      cart = await this.prisma.cart.create({ data: { userId } });
-    }
-
-    return this.prisma.cartItem.create({
-      data: {
-        cartId: cart.id,
-        productId: data.productId,
-        productVariantId: data.productVariantId,
-        lensPackageId: data.lensPackageId,
-        prescriptionId: data.prescriptionId,
-        quantity: data.quantity || 1,
-      }
-    });
+  async addToCart(userId: string, data: CartItemDto) {
+    const variant = await this.prisma.productVariant.findFirst({ where: { id: data.productVariantId, productId: data.productId, isActive: true, product: { status: 'PUBLISHED' } } });
+    if (!variant) throw new BadRequestException('This product variant is unavailable.');
+    if (data.lensPackageId && !await this.prisma.lensPackage.findFirst({ where: { id: data.lensPackageId, isActive: true, lensType: { isActive: true } } })) throw new BadRequestException('Lens package unavailable.');
+    if (data.prescriptionId && !await this.prisma.prescription.findFirst({ where: { id: data.prescriptionId, userId } })) throw new BadRequestException('Prescription does not belong to you.');
+    const cart = await this.prisma.cart.upsert({ where: { userId }, update: {}, create: { userId } });
+    return this.prisma.cartItem.create({ data: { cartId: cart.id, ...data } });
   }
-
   async updateQuantity(id: string, userId: string, quantity: number) {
-    const item = await this.prisma.cartItem.findUnique({ 
-      where: { id },
-      include: { cart: true }
-    });
-    
-    if (!item || item.cart.userId !== userId) throw new NotFoundException('Cart item not found');
-
-    return this.prisma.cartItem.update({
-      where: { id },
-      data: { quantity }
-    });
+    const result = await this.prisma.cartItem.updateMany({ where: { id, cart: { userId } }, data: { quantity } });
+    if (!result.count) throw new NotFoundException('Cart item not found');
+    return { success: true };
   }
-
   async removeFromCart(id: string, userId: string) {
-    const item = await this.prisma.cartItem.findUnique({ 
-      where: { id },
-      include: { cart: true }
-    });
-    
-    if (!item || item.cart.userId !== userId) throw new NotFoundException('Cart item not found');
-
-    return this.prisma.cartItem.delete({ where: { id } });
-  }
-
-  async clearCart(userId: string) {
-    const cart = await this.prisma.cart.findUnique({ where: { userId } });
-    if (cart) {
-      return this.prisma.cartItem.deleteMany({ where: { cartId: cart.id } });
-    }
+    const result = await this.prisma.cartItem.deleteMany({ where: { id, cart: { userId } } });
+    if (!result.count) throw new NotFoundException('Cart item not found');
+    return { success: true };
   }
 }

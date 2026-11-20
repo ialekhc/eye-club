@@ -1,0 +1,78 @@
+import { readFile } from 'node:fs/promises';
+import assert from 'node:assert/strict';
+const origin = process.env.SMOKE_API_URL ?? 'http://127.0.0.1:4000';
+const password = process.env.SEED_OWNER_PASSWORD;
+if (!password) throw new Error('Set SEED_OWNER_PASSWORD for the local test admin.');
+let checks = 0;
+async function call(path, method = 'GET', body, token, expected = 200) {
+  const response = await fetch(`${origin}/api/v1${path}`, { method, headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) }, ...(body ? { body: JSON.stringify(body) } : {}) });
+  const data = await response.json();
+  assert.equal(response.status, expected, `${method} ${path}: ${JSON.stringify(data)}`); checks++;
+  return data;
+}
+const health = await call('/health'); assert.ok(health);
+const admin = await call('/auth/login', 'POST', { email: 'admin@eye-club.local', password }, undefined, 201);
+const email = `smoke-${Date.now()}@example.test`;
+const customer = await call('/auth/register','POST',{ email, password, firstName:'Smoke',lastName:'Customer' },undefined,201);
+await call('/vendors','GET',undefined,undefined,401);
+assert.deepEqual(await call('/vendors','GET',undefined,customer.accessToken),[]);
+await call('/vendors','POST',{name:'Forbidden'},customer.accessToken,403);
+const vendors = await call('/vendors','GET',undefined,admin.accessToken); assert.ok(vendors.length);
+const products = await call('/catalog/products'); assert.ok(products.length);
+const product = products.find(product => product.variants.length); const variant = product.variants[0];
+await call('/cart','POST',{productId:product.id,productVariantId:variant.id,quantity:-1},customer.accessToken,400);
+await call('/cart','POST',{productId:product.id,productVariantId:variant.id,quantity:1},customer.accessToken,201);
+assert.equal((await call('/cart','GET',undefined,customer.accessToken)).length,1);
+const address = {fullName:'Smoke Customer',phone:'9800000000',province:'Bagmati',district:'Kathmandu',municipality:'Kathmandu',street:'Test Street'};
+const order = await call('/orders/checkout','POST',{address,paymentMethod:'CASH_ON_DELIVERY'},customer.accessToken,201);
+assert.ok(order.orderNumber.startsWith('EC-'));
+assert.equal(Number(order.totalAmount), Number(variant.price ?? product.discountPrice ?? product.basePrice) + (Number(variant.price ?? product.discountPrice ?? product.basePrice) >= 5000 ? 0 : 200));
+assert.equal((await call('/cart','GET',undefined,customer.accessToken)).length,0);
+await call('/orders/checkout','POST',{address,paymentMethod:'CASH_ON_DELIVERY'},customer.accessToken,400);
+await call(`/admin/orders/${order.id}/status`,'PUT',{status:'CANCELLED'},admin.accessToken);
+await call(`/admin/orders/${order.id}/status`,'PUT',{status:'CANCELLED'},admin.accessToken);
+assert.ok((await call('/orders','GET',undefined,customer.accessToken)).some(item => item.id === order.id));
+await call(`/orders/${order.id}`,'GET',undefined,admin.accessToken,404);
+const rx = await call('/prescriptions','POST',{label:'Smoke prescription',odSph:-2,osSph:-1.5,odAxis:90,osAxis:80},customer.accessToken,201); assert.ok(rx.id);
+await call('/wishlist','POST',{productId:product.id},customer.accessToken,201);
+const saved = await call('/wishlist','GET',undefined,customer.accessToken); assert.ok(saved.length);
+await call(`/wishlist/${saved[0].id}`,'DELETE',undefined,customer.accessToken);
+const stores = await call('/stores');
+const appointment = await call('/appointments','POST',{storeId:stores[0].id,patientName:'Smoke Customer',patientPhone:'9800000000',dateTime:new Date(Date.now()+86400000).toISOString()},customer.accessToken,201);
+assert.ok((await call('/appointments/me','GET',undefined,customer.accessToken)).some(item => item.id === appointment.id));
+await call(`/appointments/${appointment.id}/cancel`,'PUT',undefined,customer.accessToken);
+const registers = await call('/pos/registers','GET',undefined,admin.accessToken); const register = registers.find(row => row.vendorId === product.vendorId);
+const session = await call('/pos/sessions/open','POST',{vendorId:register.vendorId,registerId:register.id,openingCash:1000},admin.accessToken,201);
+const sale = await call('/pos/checkout','POST',{vendorId:register.vendorId,storeId:register.storeId,posRegisterId:register.id,posSessionId:session.id,items:[{productVariantId:variant.id,productName:'Tampered',sku:'fake',unitPrice:1,lensPrice:0,quantity:1}],paymentMethod:'CASH',paidAmount:Number(variant.price ?? product.discountPrice ?? product.basePrice)},admin.accessToken,201);
+assert.equal(sale.items[0].productName,product.name); assert.equal(Number(sale.items[0].unitPrice),Number(variant.price ?? product.discountPrice ?? product.basePrice));
+await call(`/pos/sessions/${session.id}/close`,'POST',{closingCash:1000+Number(sale.paidAmount)},admin.accessToken,201);
+
+// Merchant assets, widget policy, and non-image analytics.
+const frameBytes = await readFile(new URL('../client/public/frames/atelier-01.png',import.meta.url));
+await call(`/admin/products/${product.id}/frame`,'POST',{base64:frameBytes.toString('base64'),mimeType:'image/png',calibration:{leftAnchorX:.25,leftAnchorY:.5,rightAnchorX:.75,rightAnchorY:.5,bridgeX:.5,bridgeY:.4,scaleMultiplier:1,offsetX:0,offsetY:0,rotationOffset:0}},admin.accessToken,201);
+const vendor=vendors.find(v=>v.id===product.vendorId);
+assert.ok((await call(`/public/catalogue/${vendor.slug}`)).some(item=>item.id===product.id));
+const widget=await call('/admin/widgets','POST',{vendorId:vendor.id,allowedOrigins:['https://shop.example.test']},admin.accessToken,201);
+await call(`/widget/config/${widget.publicKey}?origin=https%3A%2F%2Fshop.example.test`);
+await call(`/widget/config/${widget.publicKey}?origin=https%3A%2F%2Fevil.example.test`,'GET',undefined,undefined,404);
+const tryon=await call('/tryons/sessions','POST',{organizationSlug:vendor.slug},undefined,201);
+await call(`/tryons/sessions/${tryon.publicId}/events`,'POST',{eventType:'FRAME_SELECTED',eyewearId:product.id},undefined,201);
+await call('/admin/analytics','GET',undefined,admin.accessToken);
+// Existing customer joins one vendor, then cannot cross its boundary or escalate roles.
+const invitation=await call(`/vendors/${vendor.id}/members`,'POST',{email,firstName:'Smoke',lastName:'Customer',role:'CASHIER',storeId:register.storeId},admin.accessToken,201);
+await call(`/auth/invitations/${invitation.invitationToken}/accept`,'POST',{email,password},undefined,201);
+await call(`/pos/catalog?vendorId=${vendor.id}&storeId=${register.storeId}`,'GET',undefined,customer.accessToken);
+const otherVendor=vendors.find(v=>v.id!==vendor.id);
+await call(`/pos/catalog?vendorId=${otherVendor.id}&storeId=${otherVendor.stores[0].id}`,'GET',undefined,customer.accessToken,403);
+await call(`/vendors/${vendor.id}/members`,'POST',{email:'bad@example.test',firstName:'Bad',lastName:'Role',role:'SUPER_ADMIN'},customer.accessToken,403);
+await call(`/pos/catalog?vendorId=${otherVendor.id}&search=Air`,'GET',undefined,customer.accessToken,403);
+// Reset tokens are one-use, and invalidate outstanding refresh tokens.
+const reset=await call('/auth/password-reset/request','POST',{email},undefined,201);
+assert.ok(reset.token);
+await call('/auth/password-reset/confirm','POST',{token:reset.token,password},undefined,201);
+await call('/auth/password-reset/confirm','POST',{token:reset.token,password},undefined,401);
+const relogin=await call('/auth/login','POST',{email,password},undefined,201);
+customer.refreshToken=relogin.refreshToken;
+const refreshed = await call('/auth/refresh','POST',{refreshToken:customer.refreshToken},undefined,201); assert.ok(refreshed.accessToken);
+await call('/auth/refresh','POST',{refreshToken:customer.refreshToken},undefined,401);
+console.log(`Commerce smoke passed: ${checks} HTTP checks; customer checkout, persistence, ownership, prescriptions, wishlist, appointments, POS pricing/session, refresh replay.`);

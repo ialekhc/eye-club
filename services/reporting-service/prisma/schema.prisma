@@ -1,0 +1,31 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("REPORTING_DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model DailyCentreMetricProjection {
+  id                 String   @id @default(cuid())
+  tenantId           String
+  opticalCentreId    String
+  dateKey            String   // YYYY-MM-DD
+  trialsStarted      Int      @default(0)
+  framesShortlisted  Int      @default(0)
+  trialsConverted    Int      @default(0)
+  completedSales     Int      @default(0)
+  grossRevenue       Decimal  @default(0) @db.Decimal(12, 2)
+  collectedRevenue   Decimal  @default(0) @db.Decimal(12, 2)
+  refundedAmount     Decimal  @default(0) @db.Decimal(12, 2)
+  updatedAt          DateTime @updatedAt
+
+  @@unique([tenantId, opticalCentreId, dateKey])
+}
+
+model ConsumedDomainEvent {
+  eventId     String   @id
+  eventType   String
+  processedAt DateTime @default(now())
+}

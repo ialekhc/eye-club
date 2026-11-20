@@ -1,58 +1,98 @@
-import { Module } from "@nestjs/common";
-import { JwtModule } from "@nestjs/jwt";
-import { AuthController } from "./auth.controller";
-import { HealthController } from "./health.controller";
-import { PrismaService } from "./prisma.service";
-import { LocalObjectStorageService, OBJECT_STORAGE } from "./object-storage.service";
-import { S3ObjectStorageService } from "./s3-object-storage.service";
-import { LoginRateLimitGuard, PublicRateLimitGuard } from "./rate-limit.guard";
-import { RateLimitService } from "./rate-limit.service";
-import { AuditService } from "./audit.service";
-import { AuditController } from "./audit.controller";
-import { CatalogModule } from "./catalog/catalog.module";
-import { LensesModule } from "./lenses/lenses.module";
-import { PrescriptionsModule } from "./prescriptions/prescriptions.module";
-import { CartModule } from "./cart/cart.module";
-import { OrdersModule } from "./orders/orders.module";
-import { UsersModule } from "./users/users.module";
-import { AdminModule } from "./admin/admin.module";
-import { StoresModule } from "./stores/stores.module";
-import { AppointmentsModule } from "./appointments/appointments.module";
+import { DynamicModule, Module, Type } from "@nestjs/common";
+import { WidgetController } from "./widget.controller.js";
+import { FramesController } from "./frames.controller.js";
+import { WishlistController } from "./wishlist.controller.js";
+import { SecurityModule } from "./security.module.js";
+import { AuthController } from "./auth.controller.js";
+import { HealthController } from "./health.controller.js";
+import { PrismaService } from "./prisma.service.js";
+import { LocalObjectStorageService, OBJECT_STORAGE } from "./object-storage.service.js";
+import { S3ObjectStorageService } from "./s3-object-storage.service.js";
+import { LoginRateLimitGuard, PublicRateLimitGuard } from "./rate-limit.guard.js";
+import { RateLimitService } from "./rate-limit.service.js";
+import { AuditService } from "./audit.service.js";
+import { AuditController } from "./audit.controller.js";
+import { CatalogModule } from "./catalog/catalog.module.js";
+import { LensesModule } from "./lenses/lenses.module.js";
+import { PrescriptionsModule } from "./prescriptions/prescriptions.module.js";
+import { CartModule } from "./cart/cart.module.js";
+import { OrdersModule } from "./orders/orders.module.js";
+import { UsersModule } from "./users/users.module.js";
+import { AdminModule } from "./admin/admin.module.js";
+import { StoresModule } from "./stores/stores.module.js";
+import { AppointmentsModule } from "./appointments/appointments.module.js";
+import { VendorsModule } from "./vendors/vendors.module.js";
+import { PosModule } from "./pos/pos.module.js";
+import { MicroservicesModule } from "./microservices/microservices.module.js";
+import type { MicroserviceRole } from "./microservices/microservices.registry.js";
 
-@Module({
-  imports: [
-    JwtModule.register({
-      secret: process.env.JWT_ACCESS_SECRET ?? "development-only-change-me",
-      signOptions: { expiresIn: (process.env.JWT_ACCESS_TTL ?? "15m") as any }
-    }),
-    CatalogModule,
-    LensesModule,
-    PrescriptionsModule,
-    CartModule,
-    OrdersModule,
-    UsersModule,
-    AdminModule,
-    StoresModule,
-    AppointmentsModule
-  ],
-  controllers: [
-    AuthController,
-    HealthController,
-    AuditController
-  ],
-  providers: [
-    PrismaService,
-    AuditService,
-    LocalObjectStorageService,
-    S3ObjectStorageService,
-    RateLimitService,
-    LoginRateLimitGuard,
-    PublicRateLimitGuard,
-    {
-      provide: OBJECT_STORAGE,
-      useFactory: (local: LocalObjectStorageService, s3: S3ObjectStorageService) => process.env.STORAGE_PROVIDER === "s3" ? s3 : local,
-      inject: [LocalObjectStorageService, S3ObjectStorageService]
-    }
-  ]
-})
-export class AppModule {}
+export function getMicroserviceComposition(role: MicroserviceRole): {
+  imports: Array<Type<unknown>>;
+  controllers: Array<Type<unknown>>;
+} {
+  switch (role) {
+    case "api-gateway":
+      // Pure API Gateway mounts zero business domain modules; only gateway health & mesh telemetry
+      return {
+        imports: [SecurityModule, MicroservicesModule],
+        controllers: [HealthController],
+      };
+
+    case "identity-tenant-service":
+      return {
+        imports: [SecurityModule, UsersModule, VendorsModule],
+        controllers: [AuthController, AuditController, HealthController],
+      };
+
+    case "catalog-tryon-service":
+      return {
+        imports: [SecurityModule, CatalogModule, LensesModule],
+        controllers: [FramesController, WidgetController, HealthController],
+      };
+
+    case "commerce-order-service":
+      return {
+        imports: [SecurityModule, CartModule, OrdersModule, AdminModule],
+        controllers: [WishlistController, HealthController],
+      };
+
+    case "clinical-store-service":
+      return {
+        imports: [SecurityModule, StoresModule, AppointmentsModule, PrescriptionsModule],
+        controllers: [HealthController],
+      };
+
+    case "pos-lab-service":
+      return {
+        imports: [SecurityModule, PosModule],
+        controllers: [HealthController],
+      };
+  }
+}
+
+@Module({})
+export class AppModule {
+  static forMicroservice(role: MicroserviceRole): DynamicModule {
+    const composition = getMicroserviceComposition(role);
+    return {
+      module: AppModule,
+      imports: composition.imports,
+      controllers: composition.controllers,
+      providers: [
+        PrismaService,
+        AuditService,
+        LocalObjectStorageService,
+        S3ObjectStorageService,
+        RateLimitService,
+        LoginRateLimitGuard,
+        PublicRateLimitGuard,
+        {
+          provide: OBJECT_STORAGE,
+          useFactory: (local: LocalObjectStorageService, s3: S3ObjectStorageService) =>
+            process.env.STORAGE_PROVIDER === "s3" ? s3 : local,
+          inject: [LocalObjectStorageService, S3ObjectStorageService],
+        },
+      ],
+    };
+  }
+}

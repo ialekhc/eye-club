@@ -1,7 +1,7 @@
 import { Controller, Get, Param, Query } from '@nestjs/common';
-import { CatalogService } from './catalog.service';
+import { CatalogService } from './catalog.service.js';
 
-@Controller('api/v1/catalog')
+@Controller('catalog')
 export class CatalogController {
   constructor(private readonly catalogService: CatalogService) {}
 
@@ -14,6 +14,7 @@ export class CatalogController {
     @Query('minPrice') minPrice?: string,
     @Query('maxPrice') maxPrice?: string,
     @Query('search') search?: string,
+    @Query('sort') sort?: string,
   ) {
     return this.catalogService.getProducts({
       category,
@@ -22,7 +23,7 @@ export class CatalogController {
       gender,
       minPrice: minPrice ? parseFloat(minPrice) : undefined,
       maxPrice: maxPrice ? parseFloat(maxPrice) : undefined,
-      search,
+      search, sort,
     });
   }
 

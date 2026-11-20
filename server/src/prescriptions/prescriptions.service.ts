@@ -1,6 +1,6 @@
+import type { PrescriptionDto } from '../commerce.dto.js';
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../prisma.service';
-import { Prisma } from '@prisma/client';
+import { PrismaService } from '../prisma.service.js';
 
 @Injectable()
 export class PrescriptionsService {
@@ -19,7 +19,7 @@ export class PrescriptionsService {
     return p;
   }
 
-  async createPrescription(userId: string, data: any) {
+  async createPrescription(userId: string, data: PrescriptionDto) {
     return this.prisma.prescription.create({
       data: {
         userId,
@@ -34,7 +34,6 @@ export class PrescriptionsService {
         osAdd: data.osAdd,
         pdRight: data.pdRight,
         pdLeft: data.pdLeft,
-        documentUrl: data.documentUrl,
         doctorName: data.doctorName,
         notes: data.notes,
       }

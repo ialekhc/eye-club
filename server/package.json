@@ -4,13 +4,13 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "nest start --watch",
-    "build": "nest build",
-    "start": "node dist/main.js",
+    "dev": "node ../scripts/dev-microservices.mjs",
+    "build": "tsc -p tsconfig.build.json",
+    "start": "node --env-file-if-exists=../.env dist/main.js",
     "prisma:generate": "prisma generate",
     "prisma:validate": "prisma validate",
     "prisma:migrate": "prisma migrate deploy",
-    "prisma:seed": "tsx prisma/seed.ts"
+    "prisma:seed": "node --env-file-if-exists=../.env ../node_modules/tsx/dist/cli.mjs prisma/seed.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "latest",
@@ -31,7 +31,8 @@
     "passport-jwt": "latest",
     "reflect-metadata": "latest",
     "rxjs": "latest",
-    "tsx": "latest"
+    "tsx": "latest",
+    "sharp": "0.35.4"
   },
   "devDependencies": {
     "@types/express": "latest",

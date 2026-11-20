@@ -1,11 +1,11 @@
 import { Controller, Get, Query, UseGuards } from "@nestjs/common";
-import { PrismaService } from "./prisma.service";
-import { AccessTokenGuard } from "./auth.guard";
-import { RolesGuard } from "./roles.guard";
-import { Roles } from "./roles.decorator";
+import { PrismaService } from "./prisma.service.js";
+import { AccessTokenGuard } from "./auth.guard.js";
+import { RolesGuard } from "./roles.guard.js";
+import { Roles } from "./roles.decorator.js";
 import { UserRole } from "@prisma/client";
 
-@Controller("api/v1/admin/audit")
+@Controller("admin/audit")
 @UseGuards(AccessTokenGuard, RolesGuard)
 export class AuditController {
   constructor(private readonly prisma: PrismaService) {}

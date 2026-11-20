@@ -13,13 +13,70 @@ datasource db {
 
 enum UserRole {
   SUPER_ADMIN
+  VENDOR_OWNER
   ADMIN
   STORE_MANAGER
   OPTOMETRIST
+  CASHIER
   ORDER_MANAGER
   INVENTORY_MANAGER
   CUSTOMER_SUPPORT
   CUSTOMER
+}
+
+enum SaaSTier {
+  STARTER
+  PROFESSIONAL
+  ENTERPRISE
+}
+
+enum VendorStatus {
+  ACTIVE
+  TRIALING
+  SUSPENDED
+}
+
+model Vendor {
+  id              String       @id @default(cuid())
+  name            String
+  slug            String       @unique
+  logoUrl         String?
+  brandColor      String       @default("#4f46e5")
+  email           String
+  phone           String?
+  taxId           String?
+  address         String?
+  currency        String       @default("NPR")
+  plan            SaaSTier     @default(STARTER)
+  status          VendorStatus @default(ACTIVE)
+  commissionRate  Decimal      @default(10.00) @db.Decimal(5, 2)
+  maxStores       Int          @default(2)
+  maxPosRegisters Int          @default(3)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  stores       Store[]
+  products     Product[]
+  orders       Order[]
+  members      VendorMember[]
+  posRegisters PosRegister[]
+  posSessions  PosSession[]
+}
+
+model VendorMember {
+  id        String   @id @default(cuid())
+  vendorId  String
+  userId    String
+  storeId   String?
+  role      UserRole @default(CASHIER)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  vendor Vendor @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  store  Store? @relation(fields: [storeId], references: [id], onDelete: SetNull)
+
+  @@unique([vendorId, userId])
 }
 
 model User {
@@ -35,13 +92,16 @@ model User {
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
-  customerProfile CustomerProfile?
-  addresses       Address[]
-  orders          Order[]
-  prescriptions   Prescription[]
-  reviews         Review[]
-  refreshTokens   RefreshToken[]
-  auditLogs       AuditLog[]
+  customerProfile   CustomerProfile?
+  addresses         Address[]
+  orders            Order[]
+  cashierOrders     Order[]        @relation("CashierOrders")
+  prescriptions     Prescription[]
+  reviews           Review[]
+  refreshTokens     RefreshToken[]
+  auditLogs         AuditLog[]
+  vendorMemberships VendorMember[]
+  posSessions       PosSession[]
 }
 
 model RefreshToken {
@@ -141,6 +201,7 @@ model ProductCollection {
 
 model Product {
   id                     String        @id @default(cuid())
+  vendorId               String?
   slug                   String        @unique
   skuBase                String        @unique
   name                   String
@@ -161,9 +222,12 @@ model Product {
   bridgeWidth            Decimal?      @db.Decimal(5, 2)
   templeLength           Decimal?      @db.Decimal(5, 2)
   weight                 Decimal?      @db.Decimal(5, 2)
+  frameAsset             Json?
+  frameCalibration       Json?
   seoTitle               String?
   seoDescription         String?
 
+  vendor        Vendor?             @relation(fields: [vendorId], references: [id], onDelete: SetNull)
   brand         Brand?              @relation(fields: [brandId], references: [id])
   category      Category?           @relation(fields: [categoryId], references: [id])
   collections   ProductCollection[]
@@ -327,14 +391,18 @@ enum OrderStatus {
 }
 
 enum PaymentMethod {
+  CASH
+  CARD
+  SPLIT
+  INSURANCE
   ESEWA
   KHALTI
-  CARD
   CASH_ON_DELIVERY
 }
 
 enum PaymentStatus {
   PENDING
+  PARTIALLY_PAID
   COMPLETED
   FAILED
   REFUNDED
@@ -343,29 +411,60 @@ enum PaymentStatus {
 enum DeliveryMethod {
   HOME_DELIVERY
   STORE_PICKUP
+  IN_STORE_IMMEDIATE
+}
+
+enum OrderChannel {
+  ONLINE
+  POS
+}
+
+enum LabStatus {
+  NONE
+  PENDING_LAB
+  IN_LAB
+  QUALITY_CHECK
+  READY_FOR_PICKUP
+  DELIVERED
 }
 
 model Order {
   id                   String               @id @default(cuid())
-  userId               String
+  vendorId             String?
+  userId               String?
   orderNumber          String               @unique
+  orderChannel         OrderChannel         @default(ONLINE)
   status               OrderStatus          @default(PENDING_PAYMENT)
+  labStatus            LabStatus            @default(NONE)
   subtotal             Decimal              @db.Decimal(10, 2)
   discount             Decimal              @default(0) @db.Decimal(10, 2)
+  taxAmount            Decimal              @default(0) @db.Decimal(10, 2)
   deliveryFee          Decimal              @default(0) @db.Decimal(10, 2)
   totalAmount          Decimal              @db.Decimal(10, 2)
+  paidAmount           Decimal              @default(0) @db.Decimal(10, 2)
+  balanceDue           Decimal              @default(0) @db.Decimal(10, 2)
+  paymentBreakdown     Json?
+  customerName         String?
+  customerPhone        String?
   shippingAddressId    String?
   deliveryMethod       DeliveryMethod       @default(HOME_DELIVERY)
-  storeId              String? // if store pickup
+  storeId              String?
+  posRegisterId        String?
+  posSessionId         String?
+  cashierId            String?
   paymentMethod        PaymentMethod        @default(CASH_ON_DELIVERY)
   paymentStatus        PaymentStatus        @default(PENDING)
   paymentTransactionId String?
   notes                String?
   items                OrderItem[]
   statusHistory        OrderStatusHistory[]
-  user                 User                 @relation(fields: [userId], references: [id])
+  vendor               Vendor?              @relation(fields: [vendorId], references: [id], onDelete: SetNull)
+  user                 User?                @relation(fields: [userId], references: [id], onDelete: SetNull)
+  cashier              User?                @relation("CashierOrders", fields: [cashierId], references: [id], onDelete: SetNull)
   shippingAddress      Address?             @relation(fields: [shippingAddressId], references: [id])
   store                Store?               @relation(fields: [storeId], references: [id])
+  posRegister          PosRegister?         @relation(fields: [posRegisterId], references: [id], onDelete: SetNull)
+  posSession           PosSession?          @relation(fields: [posSessionId], references: [id], onDelete: SetNull)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -377,6 +476,8 @@ model OrderItem {
   productVariantId String
   lensPackageId    String?
   prescriptionId   String?
+  prescriptionData Json?
+  inventoryId      String?
 
   productName String
   sku         String
@@ -402,11 +503,12 @@ model OrderStatusHistory {
 }
 
 // -----------------------------------------------------------------------------
-// STORES & APPOINTMENTS
+// STORES, POS & APPOINTMENTS
 // -----------------------------------------------------------------------------
 
 model Store {
   id           String   @id @default(cuid())
+  vendorId     String?
   name         String
   address      String
   phone        String?
@@ -416,12 +518,58 @@ model Store {
   lng          Decimal? @db.Decimal(10, 6)
   isActive     Boolean  @default(true)
 
-  orders       Order[]
-  inventory    Inventory[]
-  appointments Appointment[]
+  vendor        Vendor?        @relation(fields: [vendorId], references: [id], onDelete: SetNull)
+  orders        Order[]
+  inventory     Inventory[]
+  appointments  Appointment[]
+  posRegisters  PosRegister[]
+  vendorMembers VendorMember[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+enum PosSessionStatus {
+  OPEN
+  CLOSED
+}
+
+model PosRegister {
+  id        String   @id @default(cuid())
+  vendorId  String
+  storeId   String
+  name      String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  vendor   Vendor       @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  store    Store        @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  sessions PosSession[]
+  orders   Order[]
+}
+
+model PosSession {
+  id           String           @id @default(cuid())
+  registerId   String
+  vendorId     String
+  cashierId    String
+  openedAt     DateTime         @default(now())
+  closedAt     DateTime?
+  openingCash  Decimal          @db.Decimal(10, 2)
+  closingCash  Decimal?         @db.Decimal(10, 2)
+  expectedCash Decimal?         @db.Decimal(10, 2)
+  cashSales    Decimal          @default(0) @db.Decimal(10, 2)
+  cardSales    Decimal          @default(0) @db.Decimal(10, 2)
+  digitalSales Decimal          @default(0) @db.Decimal(10, 2)
+  difference   Decimal?         @db.Decimal(10, 2)
+  status       PosSessionStatus @default(OPEN)
+  notes        String?
+
+  register PosRegister @relation(fields: [registerId], references: [id], onDelete: Cascade)
+  vendor   Vendor      @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  cashier  User        @relation(fields: [cashierId], references: [id], onDelete: Cascade)
+  orders   Order[]
 }
 
 model Inventory {
@@ -527,4 +675,39 @@ model AuditLog {
   user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@index([userId, createdAt])
+}
+
+model AccountToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  purpose   String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+  @@index([userId, purpose])
+}
+
+model WidgetConfiguration {
+  id             String   @id @default(cuid())
+  vendorId       String
+  publicKey      String   @unique @default(cuid())
+  allowedOrigins String[]
+  enabled        Boolean  @default(true)
+  createdAt      DateTime @default(now())
+}
+model TryOnSession {
+  publicId  String @id @default(cuid())
+  vendorId  String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+model UsageEvent {
+  id        String @id @default(cuid())
+  sessionId String
+  vendorId  String
+  eventType String
+  eyewearId String?
+  createdAt DateTime @default(now())
+  @@index([vendorId, createdAt])
 }

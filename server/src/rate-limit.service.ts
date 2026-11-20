@@ -1,5 +1,5 @@
 import { Injectable, OnModuleDestroy } from "@nestjs/common";
-import Redis from "ioredis";
+import { Redis } from "ioredis";
 
 type Bucket = { count: number; resetAt: number };
 

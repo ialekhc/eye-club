@@ -1,0 +1,49 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("TRIAL_DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model AssistedTrialSession {
+  id                   String                @id @default(cuid())
+  sessionCode          String                @unique
+  tenantId             String
+  opticalCentreId      String
+  workstationId        String
+  staffId              String
+  patientId            String?
+  patientName          String
+  hospitalPatientId    String?
+  state                String                @default("ACTIVE")
+  cameraConsentGranted Boolean               @default(false)
+  selectedVariantId    String?
+  posOrderId           String?
+  startedAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  shortlistedFrames    TrialShortlistEntry[]
+}
+
+model TrialShortlistEntry {
+  id                     String               @id @default(cuid())
+  trialSessionId         String
+  frameId                String
+  variantId              String
+  sku                    String
+  brand                  String
+  name                   String
+  unitPrice              Decimal              @db.Decimal(10, 2)
+  isPreferred            Boolean              @default(false)
+  virtualTryOnTested     Boolean              @default(false)
+  physicalTryOnTested    Boolean              @default(false)
+  noseBridgeFit          String?
+  templePressure         String?
+  frameWidthSuitability  String?
+  weightComfortScore     Int?
+  stabilityScore         Int?
+  overallPreferenceScore Int?
+  staffRecommendation    String?
+  session                AssistedTrialSession @relation(fields: [trialSessionId], references: [id], onDelete: Cascade)
+}

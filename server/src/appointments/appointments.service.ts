@@ -1,11 +1,14 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../prisma.service';
+import type { AppointmentDto } from '../commerce.dto.js';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { PrismaService } from '../prisma.service.js';
 
 @Injectable()
 export class AppointmentsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async bookAppointment(userId: string | null, data: any) {
+  async bookAppointment(userId: string | null, data: AppointmentDto) {
+    if (new Date(data.dateTime).getTime() <= Date.now()) throw new BadRequestException("Choose a future appointment time.");
+    if (!await this.prisma.store.findFirst({ where: { id: data.storeId, isActive: true } })) throw new BadRequestException("Store unavailable.");
     return this.prisma.appointment.create({
       data: {
         userId,

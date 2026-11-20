@@ -1,4 +1,16 @@
 name: virtual-eyewear
+x-microservice-base: &microservice-base
+  build:
+    context: .
+    dockerfile: server/Dockerfile
+  depends_on:
+    postgres:
+      condition: service_healthy
+  init: true
+  restart: unless-stopped
+  security_opt:
+    - no-new-privileges:true
+
 services:
   postgres:
     image: postgres:16-alpine
@@ -15,50 +27,145 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
-  api:
-    build:
-      context: ./server
-      dockerfile: Dockerfile
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "127.0.0.1:6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    ports:
+      - "127.0.0.1:5672:5672"
+      - "127.0.0.1:15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  identity-tenant-service:
+    <<: *microservice-base
     environment:
+      MICROSERVICE_ROLE: identity-tenant-service
+      PORT: 4001
       DATABASE_URL: postgresql://eyewear:eyewear@postgres:5432/eyewear?schema=public
-      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:-development-only-change-me}
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:?Set JWT_ACCESS_SECRET in .env (at least 32 characters)}
+      CORS_ORIGINS: http://localhost:3000
+    ports:
+      - "127.0.0.1:4001:4001"
+
+  catalog-tryon-service:
+    <<: *microservice-base
+    environment:
+      MICROSERVICE_ROLE: catalog-tryon-service
+      PORT: 4002
+      DATABASE_URL: postgresql://eyewear:eyewear@postgres:5432/eyewear?schema=public
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:?Set JWT_ACCESS_SECRET in .env (at least 32 characters)}
       STORAGE_LOCAL_DIR: /app/.data/objects
+      CORS_ORIGINS: http://localhost:3000
+    ports:
+      - "127.0.0.1:4002:4002"
+    volumes:
+      - frame-assets:/app/.data/objects
+
+  commerce-order-service:
+    <<: *microservice-base
+    environment:
+      MICROSERVICE_ROLE: commerce-order-service
+      PORT: 4003
+      DATABASE_URL: postgresql://eyewear:eyewear@postgres:5432/eyewear?schema=public
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:?Set JWT_ACCESS_SECRET in .env (at least 32 characters)}
+      CORS_ORIGINS: http://localhost:3000
+    ports:
+      - "127.0.0.1:4003:4003"
+
+  clinical-store-service:
+    <<: *microservice-base
+    environment:
+      MICROSERVICE_ROLE: clinical-store-service
+      PORT: 4004
+      DATABASE_URL: postgresql://eyewear:eyewear@postgres:5432/eyewear?schema=public
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:?Set JWT_ACCESS_SECRET in .env (at least 32 characters)}
+      CORS_ORIGINS: http://localhost:3000
+    ports:
+      - "127.0.0.1:4004:4004"
+
+  pos-lab-service:
+    <<: *microservice-base
+    environment:
+      MICROSERVICE_ROLE: pos-lab-service
+      PORT: 4005
+      DATABASE_URL: postgresql://eyewear:eyewear@postgres:5432/eyewear?schema=public
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:?Set JWT_ACCESS_SECRET in .env (at least 32 characters)}
+      CORS_ORIGINS: http://localhost:3000
+    ports:
+      - "127.0.0.1:4005:4005"
+
+  api:
+    <<: *microservice-base
+    environment:
+      MICROSERVICE_ROLE: api-gateway
       PORT: 4000
-    depends_on:
-      postgres:
-        condition: service_healthy
+      DATABASE_URL: postgresql://eyewear:eyewear@postgres:5432/eyewear?schema=public
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:?Set JWT_ACCESS_SECRET in .env (at least 32 characters)}
+      STORAGE_LOCAL_DIR: /app/.data/objects
+      CORS_ORIGINS: http://localhost:3000
+      IDENTITY_SERVICE_URL: http://identity-tenant-service:4001
+      CATALOG_SERVICE_URL: http://catalog-tryon-service:4002
+      COMMERCE_SERVICE_URL: http://commerce-order-service:4003
+      CLINICAL_SERVICE_URL: http://clinical-store-service:4004
+      POS_SERVICE_URL: http://pos-lab-service:4005
     ports:
       - "127.0.0.1:4000:4000"
-    init: true
-    restart: unless-stopped
-    security_opt:
-      - no-new-privileges:true
+    volumes:
+      - frame-assets:/app/.data/objects
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4000/api/v1/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
       interval: 30s
       timeout: 5s
       start_period: 20s
       retries: 3
+
   seed:
     profiles: ["seed"]
     build:
-      context: ./server
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: server/Dockerfile
     environment:
       DATABASE_URL: postgresql://eyewear:eyewear@postgres:5432/eyewear?schema=public
-      SEED_OWNER_EMAIL: ${SEED_OWNER_EMAIL:-owner@example.test}
-      SEED_OWNER_PASSWORD: ${SEED_OWNER_PASSWORD:-change-this-local-password}
+      NODE_ENV: development
+      SEED_OWNER_PASSWORD: ${SEED_OWNER_PASSWORD:-}
     depends_on:
       postgres:
         condition: service_healthy
       api:
         condition: service_healthy
-    command: ["pnpm", "exec", "prisma", "db", "seed"]
+    command: ["npm", "run", "db:seed"]
     restart: "no"
+
   web:
     build:
       context: .
       dockerfile: client/Dockerfile
+    environment:
+      API_INTERNAL_URL: http://api:4000
+      IDENTITY_SERVICE_URL: http://identity-tenant-service:4001
+      CATALOG_SERVICE_URL: http://catalog-tryon-service:4002
+      COMMERCE_SERVICE_URL: http://commerce-order-service:4003
+      CLINICAL_SERVICE_URL: http://clinical-store-service:4004
+      POS_SERVICE_URL: http://pos-lab-service:4005
+      NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:?Set NEXTAUTH_SECRET in .env}
+      WIDGET_EMBED_ORIGINS: ${WIDGET_EMBED_ORIGINS:-}
+    depends_on:
+      api:
+        condition: service_healthy
     ports:
       - "127.0.0.1:3000:3000"
     init: true
@@ -74,3 +181,4 @@ services:
 
 volumes:
   postgres-data:
+  frame-assets:

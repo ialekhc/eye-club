@@ -2,12 +2,12 @@ import { createHash, randomUUID } from "node:crypto";
 import { BadRequestException, Injectable } from "@nestjs/common";
 import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { inspectFrame, type ObjectStorage, type PresignedUpload, type StoredObject, type UploadedFrame } from "./object-storage.service";
+import { inspectFrame, type ObjectStorage, type PresignedUpload, type StoredObject, type UploadedFrame } from "./object-storage.service.js";
 
 @Injectable()
 export class S3ObjectStorageService implements ObjectStorage {
   private readonly bucket = process.env.S3_BUCKET;
-  private readonly client = new S3Client({ region: process.env.S3_REGION ?? "auto", endpoint: process.env.S3_ENDPOINT || undefined, forcePathStyle: process.env.S3_FORCE_PATH_STYLE === "true" });
+  private readonly client = new S3Client({ credentials: process.env.S3_ACCESS_KEY_ID && process.env.S3_SECRET_ACCESS_KEY ? { accessKeyId: process.env.S3_ACCESS_KEY_ID, secretAccessKey: process.env.S3_SECRET_ACCESS_KEY } : undefined, region: process.env.S3_REGION ?? "auto", endpoint: process.env.S3_ENDPOINT || undefined, forcePathStyle: process.env.S3_FORCE_PATH_STYLE === "true" });
 
   private requireBucket() { if (!this.bucket) throw new Error("S3_BUCKET is required when STORAGE_PROVIDER=s3."); return this.bucket; }
 

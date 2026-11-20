@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../prisma.service';
+import { PrismaService } from '../prisma.service.js';
 import { Prisma } from '@prisma/client';
 
 @Injectable()
@@ -14,6 +14,7 @@ export class CatalogService {
     minPrice?: number;
     maxPrice?: number;
     search?: string;
+    sort?: string;
   }) {
     const where: Prisma.ProductWhereInput = { status: 'PUBLISHED' };
 
@@ -29,10 +30,10 @@ export class CatalogService {
     if (params.gender) {
       where.gender = params.gender;
     }
-    if (params.minPrice || params.maxPrice) {
+    if (params.minPrice !== undefined || params.maxPrice !== undefined) {
       where.basePrice = {};
-      if (params.minPrice) where.basePrice.gte = params.minPrice;
-      if (params.maxPrice) where.basePrice.lte = params.maxPrice;
+      if (params.minPrice !== undefined && Number.isFinite(params.minPrice)) where.basePrice.gte = params.minPrice;
+      if (params.maxPrice !== undefined && Number.isFinite(params.maxPrice)) where.basePrice.lte = params.maxPrice;
     }
     if (params.search) {
       where.OR = [
@@ -43,7 +44,9 @@ export class CatalogService {
 
     return this.prisma.product.findMany({
       where,
+      orderBy: params.sort === 'price-asc' ? { basePrice: 'asc' } : params.sort === 'price-desc' ? { basePrice: 'desc' } : { createdAt:'desc' },
       include: {
+        vendor: { select: { slug: true } },
         brand: true,
         category: true,
         variants: {
@@ -60,6 +63,7 @@ export class CatalogService {
     const product = await this.prisma.product.findUnique({
       where: { slug, status: 'PUBLISHED' },
       include: {
+        vendor: { select: { slug: true } },
         brand: true,
         category: true,
         variants: {

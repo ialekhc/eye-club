@@ -1,0 +1,46 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("IDENTITY_DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model StaffUser {
+  id              String   @id @default(cuid())
+  email           String   @unique
+  passwordHash    String
+  firstName       String
+  lastName        String
+  role            String
+  tenantId        String
+  opticalCentreId String?
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  sessions        StaffSession[]
+}
+
+model StaffSession {
+  id            String    @id @default(cuid())
+  staffId       String
+  workstationId String?
+  tokenHash     String    @unique
+  expiresAt     DateTime
+  revokedAt     DateTime?
+  createdAt     DateTime  @default(now())
+  staff         StaffUser @relation(fields: [staffId], references: [id], onDelete: Cascade)
+}
+
+model OutboxEvent {
+  id            String   @id @default(cuid())
+  eventType     String
+  aggregateId   String
+  tenantId      String
+  correlationId String
+  payload       Json
+  status        String   @default("PENDING")
+  attempts      Int      @default(0)
+  createdAt     DateTime @default(now())
+}

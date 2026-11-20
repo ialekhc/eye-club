@@ -1,0 +1,54 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("INVENTORY_DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model CentreStock {
+  id                String             @id @default(cuid())
+  tenantId          String
+  opticalCentreId   String
+  frameVariantId    String
+  sku               String
+  onHandQuantity    Int                @default(0)
+  reservedQuantity  Int                @default(0)
+  availableQuantity Int                @default(0)
+  lowStockThreshold Int                @default(5)
+  unitCost          Decimal            @default(0) @db.Decimal(10, 2)
+  version           Int                @default(1)
+  updatedAt         DateTime           @updatedAt
+  reservations      StockReservation[]
+  ledgerEntries     StockLedgerEntry[]
+
+  @@unique([tenantId, opticalCentreId, frameVariantId])
+}
+
+model StockReservation {
+  id              String      @id @default(cuid())
+  tenantId        String
+  opticalCentreId String
+  stockId         String
+  referenceId     String      @unique // trialSessionId or posOrderId
+  quantity        Int
+  status          String      @default("RESERVED") // RESERVED | COMMITTED | RELEASED
+  expiresAt       DateTime
+  createdAt       DateTime    @default(now())
+  stock           CentreStock @relation(fields: [stockId], references: [id], onDelete: Cascade)
+}
+
+model StockLedgerEntry {
+  id              String      @id @default(cuid())
+  tenantId        String
+  opticalCentreId String
+  stockId         String
+  movementType    String      // RECEIVE | RESERVE | RELEASE | SALE_COMMIT | ADJUST | TRANSFER_OUT | TRANSFER_IN
+  quantityDelta   Int
+  reason          String
+  staffId         String
+  correlationId   String
+  createdAt       DateTime    @default(now())
+  stock           CentreStock @relation(fields: [stockId], references: [id], onDelete: Cascade)
+}

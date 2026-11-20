@@ -1,5 +1,6 @@
+import type { ProfileDto } from '../commerce.dto.js';
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../prisma.service';
+import { PrismaService } from '../prisma.service.js';
 
 @Injectable()
 export class UsersService {
@@ -23,7 +24,7 @@ export class UsersService {
     return user;
   }
 
-  async updateProfile(userId: string, data: any) {
+  async updateProfile(userId: string, data: ProfileDto) {
     return this.prisma.user.update({
       where: { id: userId },
       data: {

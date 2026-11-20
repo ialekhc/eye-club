@@ -1,13 +1,14 @@
-import { Controller, Get, Put, Param, Body, Query, UseGuards } from '@nestjs/common';
-import { AdminService } from './admin.service';
-import { AccessTokenGuard } from '../auth.guard';
-import { RolesGuard } from '../roles.guard';
-import { Roles } from '../roles.decorator';
+import { CreateProductDto, InventoryDto } from './catalog.dto.js';
+import { Controller, Get, Post, Put, Param, Body, Query, UseGuards } from '@nestjs/common';
+import { AdminService } from './admin.service.js';
+import { AccessTokenGuard } from '../auth.guard.js';
+import { RolesGuard } from '../roles.guard.js';
+import { Roles } from '../roles.decorator.js';
 import { UserRole, OrderStatus, ProductStatus } from '@prisma/client';
 
-@Controller('api/v1/admin')
+@Controller('admin')
 @UseGuards(AccessTokenGuard, RolesGuard)
-@Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.STORE_MANAGER)
+@Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
 export class AdminController {
   constructor(private readonly adminService: AdminService) {}
 
@@ -30,6 +31,11 @@ export class AdminController {
   async getProducts() {
     return this.adminService.getProducts();
   }
+
+  @Post('products')
+  createProduct(@Body() input: CreateProductDto) { return this.adminService.createProduct(input); }
+  @Put('inventory/:id')
+  updateInventory(@Param('id') id: string, @Body() input: InventoryDto) { return this.adminService.updateInventory(id, input); }
 
   @Put('products/:id/status')
   async updateProductStatus(@Param('id') id: string, @Body('status') status: ProductStatus) {

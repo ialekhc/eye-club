@@ -1,0 +1,55 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("CATALOG_DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model FrameCatalogItem {
+  id               String         @id @default(cuid())
+  tenantId         String
+  sku              String         @unique
+  barcode          String         @unique
+  brand            String
+  modelName        String
+  category         String         // EYEGLASSES | SUNGLASSES
+  shape            String
+  material         String
+  color            String
+  sizeLabel        String
+  frameWidthMm     Decimal        @db.Decimal(5, 2)
+  bridgeWidthMm    Decimal        @db.Decimal(5, 2)
+  templeLengthMm   Decimal        @db.Decimal(5, 2)
+  lensWidthMm      Decimal        @db.Decimal(5, 2)
+  lensHeightMm     Decimal        @db.Decimal(5, 2)
+  weightGrams      Decimal        @db.Decimal(5, 2)
+  basePrice        Decimal        @db.Decimal(10, 2)
+  overlayAssetUrl  String
+  calibrationJson  Json
+  isActive         Boolean        @default(true)
+  centrePrices     CentrePrice[]
+}
+
+model CentrePrice {
+  id              String           @id @default(cuid())
+  tenantId        String
+  opticalCentreId String
+  frameId         String
+  price           Decimal          @db.Decimal(10, 2)
+  frame           FrameCatalogItem @relation(fields: [frameId], references: [id], onDelete: Cascade)
+
+  @@unique([opticalCentreId, frameId])
+}
+
+model LensCatalogOption {
+  id          String  @id @default(cuid())
+  tenantId    String
+  visionType  String  // SINGLE_VISION | PROGRESSIVE | BIFOCAL | ZERO_POWER
+  packageName String
+  index       Decimal @db.Decimal(4, 2)
+  coating     String
+  price       Decimal @db.Decimal(10, 2)
+  isActive    Boolean @default(true)
+}

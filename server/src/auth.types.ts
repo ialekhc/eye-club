@@ -5,3 +5,5 @@ export interface AuthenticatedUser {
   email: string;
   role: UserRole;
 }
+
+export type AuthenticatedRequest = import('express').Request & { user: AuthenticatedUser };

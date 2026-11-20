@@ -1,0 +1,60 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("POS_DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model PosSaleInvoice {
+  id                 String            @id @default(cuid())
+  invoiceNumber      String            @unique
+  tenantId           String
+  opticalCentreId    String
+  workstationId      String
+  staffId            String
+  trialSessionId     String?
+  patientId          String?
+  patientName        String
+  hospitalPatientId  String?
+  subtotal           Decimal           @db.Decimal(10, 2)
+  discountAmount     Decimal           @default(0) @db.Decimal(10, 2)
+  taxAmount          Decimal           @default(0) @db.Decimal(10, 2)
+  totalAmount        Decimal           @db.Decimal(10, 2)
+  paidAmount         Decimal           @db.Decimal(10, 2)
+  balanceDue         Decimal           @default(0) @db.Decimal(10, 2)
+  paymentMethod      String
+  paymentStatus      String
+  orderStatus        String            @default("CONFIRMED")
+  prescriptionJson   Json?
+  createdAt          DateTime          @default(now())
+  lines              PosSaleLineItem[]
+  refunds            PosRefundRecord[]
+}
+
+model PosSaleLineItem {
+  id              String         @id @default(cuid())
+  invoiceId       String
+  frameVariantId  String
+  sku             String
+  description     String
+  quantity        Int
+  frameUnitPrice  Decimal        @db.Decimal(10, 2)
+  lensPackageId   String?
+  lensPackageName String?
+  lensUnitPrice   Decimal        @default(0) @db.Decimal(10, 2)
+  lineTotal       Decimal        @db.Decimal(10, 2)
+  invoice         PosSaleInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+}
+
+model PosRefundRecord {
+  id           String         @id @default(cuid())
+  invoiceId    String
+  tenantId     String
+  refundAmount Decimal        @db.Decimal(10, 2)
+  reason       String
+  approvedById String
+  createdAt    DateTime       @default(now())
+  invoice      PosSaleInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+}

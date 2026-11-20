@@ -1,0 +1,67 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("TENANT_DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Tenant {
+  id              String            @id @default(cuid())
+  name            String
+  slug            String            @unique
+  tenantType      String            // HOSPITAL | HOSPITAL_OPTICAL_BUSINESS | INDEPENDENT_OPTICAL_CENTRE
+  status          String            @default("ACTIVE")
+  plan            String            @default("ENTERPRISE")
+  maxCentres      Int               @default(10)
+  maxWorkstations Int               @default(25)
+  createdAt       DateTime          @default(now())
+  businesses      OpticalBusiness[]
+  subscriptions   Subscription[]
+}
+
+model OpticalBusiness {
+  id        String          @id @default(cuid())
+  tenantId  String
+  name      String
+  taxId     String?
+  currency  String          @default("NPR")
+  tenant    Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  centres   OpticalCentre[]
+}
+
+model OpticalCentre {
+  id                String          @id @default(cuid())
+  tenantId          String
+  opticalBusinessId String
+  name              String
+  code              String          @unique
+  address           String
+  phone             String?
+  isActive          Boolean         @default(true)
+  business          OpticalBusiness @relation(fields: [opticalBusinessId], references: [id], onDelete: Cascade)
+  workstations      Workstation[]
+}
+
+model Workstation {
+  id              String        @id @default(cuid())
+  tenantId        String
+  opticalCentreId String
+  workstationCode String        @unique
+  deviceName      String
+  licenseKey      String        @unique
+  status          String        @default("ACTIVE")
+  lastHeartbeatAt DateTime?
+  centre          OpticalCentre @relation(fields: [opticalCentreId], references: [id], onDelete: Cascade)
+}
+
+model Subscription {
+  id               String   @id @default(cuid())
+  tenantId         String
+  plan             String
+  status           String
+  validUntil       DateTime
+  entitlementsJson Json
+  tenant           Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+}

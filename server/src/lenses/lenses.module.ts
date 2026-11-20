@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
-import { LensesController } from './lenses.controller';
-import { LensesService } from './lenses.service';
-import { PrismaService } from '../prisma.service';
+import { LensesController } from './lenses.controller.js';
+import { LensesService } from './lenses.service.js';
+import { PrismaService } from '../prisma.service.js';
 
 @Module({
   controllers: [LensesController],
