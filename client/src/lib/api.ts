@@ -1,6 +1,7 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+import type { ProductDetail } from '@/features/commerce/ProductDetails';
+const API_BASE_URL = process.env.API_INTERNAL_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
-export async function fetchProducts(params: Record<string, string> = {}) {
+export async function fetchProducts(params: Record<string, string> = {}): Promise<ProductDetail[]> {
   const query = new URLSearchParams(params).toString();
   const url = `${API_BASE_URL}/api/v1/catalog/products${query ? `?${query}` : ''}`;
   
@@ -8,8 +9,9 @@ export async function fetchProducts(params: Record<string, string> = {}) {
     const res = await fetch(url, { next: { revalidate: 60 } });
     if (!res.ok) throw new Error('Failed to fetch products');
     return res.json();
-  } catch (error) {
-    console.warn("Backend unreachable. Using dummy product data.");
+  } catch {
+    if (process.env.NEXT_PUBLIC_DEMO_MODE !== "true") throw new Error("Catalogue service unavailable. Please try again shortly.");
+    console.warn("Demo mode: sample product data.");
     return [
       {
         id: "atelier-01",
@@ -80,8 +82,9 @@ export async function fetchProductBySlug(slug: string) {
     }
     return res.json();
   } catch (error) {
+    if (process.env.NEXT_PUBLIC_DEMO_MODE !== "true") throw error;
     const allProducts = await fetchProducts();
-    return allProducts.find((p: any) => p.slug === slug) || null;
+    return allProducts.find(p => p.slug === slug) || null;
   }
 }
 
@@ -93,6 +96,7 @@ export async function fetchCategories() {
     if (!res.ok) throw new Error('Failed to fetch categories');
     return res.json();
   } catch (error) {
+    if (process.env.NEXT_PUBLIC_DEMO_MODE !== "true") throw error;
     return [
       { id: "cat-1", name: "Eyeglasses", slug: "eyeglasses" },
       { id: "cat-2", name: "Sunglasses", slug: "sunglasses" },

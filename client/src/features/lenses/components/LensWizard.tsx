@@ -2,40 +2,61 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
+import { commerceRequest, jsonBody } from '@/lib/commerce-api';
+import { useSearchParams } from 'next/navigation';
+import { RemoteError } from '@/components/RemoteState';
 import { useRouter } from 'next/navigation';
 import { Check, ChevronLeft, ChevronRight, ShieldCheck } from 'lucide-react';
 
 type Step = 'TYPE' | 'PACKAGE' | 'PRESCRIPTION' | 'REVIEW';
 
-export function LensWizard({ product, lensTypes }: { product: any, lensTypes: any[] }) {
+type LensPackage = { id: string; name: string; price: string | number; features: string[]; isRecommended: boolean };
+type LensType = { id: string; name: string; description: string; packages: LensPackage[] };
+export function LensWizard({ product, lensTypes }: { product: import('@/features/commerce/ProductDetails').ProductDetail, lensTypes: LensType[] }) {
   const router = useRouter();
   const [step, setStep] = useState<Step>('TYPE');
   
-  const [selectedType, setSelectedType] = useState<any>(null);
-  const [selectedPackage, setSelectedPackage] = useState<any>(null);
+  const [selectedType, setSelectedType] = useState<LensType | null>(null);
+  const [selectedPackage, setSelectedPackage] = useState<LensPackage | null>(null);
   const [prescription, setPrescription] = useState({
     odSph: '', odCyl: '', odAxis: '',
     osSph: '', osCyl: '', osAxis: '',
     pd: ''
   });
 
-  const defaultVariant = product.variants[0];
-  const framePrice = defaultVariant?.price ? defaultVariant.price : parseFloat(product.basePrice);
+  const searchParams = useSearchParams();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const defaultVariant = product.variants.find((v: { id: string }) => v.id === searchParams.get('variant')) ?? product.variants[0];
+  const framePrice = Number(defaultVariant?.price ?? product.discountPrice ?? product.basePrice);
 
   const calculateTotal = () => {
     let total = framePrice;
-    if (selectedPackage) total += selectedPackage.price;
+    if (selectedPackage) total += Number(selectedPackage.price);
     return total;
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (step === 'TYPE') setStep('PACKAGE');
     else if (step === 'PACKAGE') setStep('PRESCRIPTION');
     else if (step === 'PRESCRIPTION') setStep('REVIEW');
     else {
-      // Add to Cart Logic here (omitted for brevity, assume API call)
-      alert("Added to Cart successfully!");
-      router.push('/cart');
+      setBusy(true); setError('');
+      try {
+        let prescriptionId: string | undefined;
+        if (selectedPackage && Object.values(prescription).some(Boolean)) {
+          const values: Record<string, unknown> = { label: `Lenses for ${product.name}` };
+          for (const [key,value] of Object.entries(prescription)) {
+            if (!value) continue;
+            if (key === 'pd') { values.pdRight = Number(value) / 2; values.pdLeft = Number(value) / 2; }
+            else values[key] = Number(value);
+          }
+          prescriptionId = (await commerceRequest<{ id: string }>('/prescriptions', { method: 'POST', body: jsonBody(values) })).id;
+        }
+        await commerceRequest('/cart', { method: 'POST', body: jsonBody({ productId: product.id, productVariantId: defaultVariant!.id, quantity: 1, ...(selectedPackage ? { lensPackageId: selectedPackage.id } : {}), ...(prescriptionId ? { prescriptionId } : {}) }) });
+        window.dispatchEvent(new Event('cart-updated'));
+        router.push('/cart');
+      } catch(e) { setError((e as Error).message); } finally { setBusy(false); }
     }
   };
 
@@ -48,6 +69,7 @@ export function LensWizard({ product, lensTypes }: { product: any, lensTypes: an
 
   return (
     <div className="flex flex-col lg:flex-row gap-8">
+      {error ? <RemoteError message={error} /> : null}
       {/* Main Wizard Area */}
       <div className="w-full lg:w-2/3 flex flex-col">
         
@@ -74,7 +96,7 @@ export function LensWizard({ product, lensTypes }: { product: any, lensTypes: an
                 {lensTypes.map(lt => (
                   <button 
                     key={lt.id}
-                    onClick={() => setSelectedType(lt)}
+                    onClick={() => { setSelectedType(lt); setSelectedPackage(null); }}
                     className={`flex items-start p-5 rounded-xl border-2 text-left transition-colors ${selectedType?.id === lt.id ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'}`}
                   >
                     <div className="flex-1">
@@ -102,7 +124,7 @@ export function LensWizard({ product, lensTypes }: { product: any, lensTypes: an
             <div className="animate-in fade-in slide-in-from-bottom-4">
               <h2 className="text-2xl font-bold mb-6">Select Lens Package</h2>
               <div className="grid md:grid-cols-3 gap-4">
-                {selectedType.packages.map((pkg: any) => (
+                {selectedType.packages.map((pkg: LensPackage) => (
                   <button 
                     key={pkg.id}
                     onClick={() => setSelectedPackage(pkg)}
@@ -177,7 +199,7 @@ export function LensWizard({ product, lensTypes }: { product: any, lensTypes: an
                 <div className="flex justify-between items-center py-4 border-b">
                   <div>
                     <h3 className="font-bold">{product.name}</h3>
-                    <p className="text-muted-foreground text-sm">Color: {defaultVariant.color}</p>
+                    <p className="text-muted-foreground text-sm">Color: {defaultVariant?.color}</p>
                   </div>
                   <span className="font-bold">NPR {framePrice}</span>
                 </div>
@@ -229,7 +251,7 @@ export function LensWizard({ product, lensTypes }: { product: any, lensTypes: an
           
           <button 
             onClick={handleNext}
-            disabled={(step === 'TYPE' && !selectedType) || (step === 'PACKAGE' && !selectedPackage)}
+            disabled={busy || (step === 'TYPE' && !selectedType) || (step === 'PACKAGE' && !selectedPackage)}
             className="flex items-center gap-2 px-8 py-3 bg-primary text-primary-foreground rounded-xl font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {step === 'REVIEW' ? 'Add to Cart' : 'Continue'} <ChevronRight className="w-4 h-4" />
@@ -244,13 +266,13 @@ export function LensWizard({ product, lensTypes }: { product: any, lensTypes: an
           
           <div className="flex gap-4 mb-6">
             <div className="w-20 h-20 rounded-xl bg-white border flex items-center justify-center overflow-hidden relative">
-              {defaultVariant.images[0] && (
-                <Image src={defaultVariant.images[0].url} alt={product.name} fill className="object-cover" />
+              {defaultVariant?.images[0] && (
+                <Image src={defaultVariant?.images[0].url} alt={product.name} fill className="object-cover" />
               )}
             </div>
             <div>
               <h4 className="font-bold">{product.name}</h4>
-              <p className="text-sm text-muted-foreground">{defaultVariant.color}</p>
+              <p className="text-sm text-muted-foreground">{defaultVariant?.color}</p>
               <p className="text-sm font-medium mt-1">NPR {framePrice}</p>
             </div>
           </div>

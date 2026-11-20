@@ -1,59 +1,18 @@
-import Link from "next/link";
-import { Search, MapPin, Heart, User, ShoppingCart, Menu } from "lucide-react";
-
+'use client';
+import Link from 'next/link';
+import { useSession } from 'next-auth/react';
+import { useEffect, useState } from 'react';
+import { commerceRequest, CartItem } from '@/lib/commerce-api';
 export function Header() {
-  return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container mx-auto px-4 lg:px-8 h-20 flex items-center justify-between">
-        {/* Mobile menu & Logo */}
-        <div className="flex items-center gap-4 lg:gap-8">
-          <button className="lg:hidden p-2 text-foreground">
-            <Menu className="h-6 w-6" />
-            <span className="sr-only">Toggle Menu</span>
-          </button>
-          
-          <Link href="/" className="text-2xl font-bold tracking-tight text-primary">
-            Eye-Club<span className="text-accent">.</span>
-          </Link>
-
-          {/* Desktop Nav */}
-          <nav className="hidden lg:flex items-center gap-8 text-sm font-medium">
-            <Link href="/eyeglasses" className="hover:text-primary transition-colors text-muted-foreground">Eyeglasses</Link>
-            <Link href="/sunglasses" className="hover:text-primary transition-colors text-muted-foreground">Sunglasses</Link>
-            <Link href="/contact-lenses" className="hover:text-primary transition-colors text-muted-foreground">Contact Lenses</Link>
-            <Link href="/kids" className="hover:text-primary transition-colors text-muted-foreground">Kids</Link>
-            <Link href="/eye-care" className="hover:text-primary transition-colors text-muted-foreground">Eye Care</Link>
-            <Link href="/offers" className="text-accent hover:text-accent/80 transition-colors">Offers</Link>
-          </nav>
-        </div>
-
-        {/* Actions */}
-        <div className="flex items-center gap-4 lg:gap-6">
-          <button className="p-2 text-muted-foreground hover:text-primary transition-colors hidden sm:block">
-            <Search className="h-5 w-5" />
-            <span className="sr-only">Search</span>
-          </button>
-          <Link href="/stores" className="p-2 text-muted-foreground hover:text-primary transition-colors hidden lg:block">
-            <MapPin className="h-5 w-5" />
-            <span className="sr-only">Store Locator</span>
-          </Link>
-          <Link href="/wishlist" className="p-2 text-muted-foreground hover:text-primary transition-colors">
-            <Heart className="h-5 w-5" />
-            <span className="sr-only">Wishlist</span>
-          </Link>
-          <Link href="/account" className="p-2 text-muted-foreground hover:text-primary transition-colors hidden lg:block">
-            <User className="h-5 w-5" />
-            <span className="sr-only">Account</span>
-          </Link>
-          <Link href="/cart" className="p-2 text-muted-foreground hover:text-primary transition-colors relative">
-            <ShoppingCart className="h-5 w-5" />
-            <span className="absolute top-0 right-0 h-4 w-4 bg-primary text-primary-foreground text-[10px] font-bold rounded-full flex items-center justify-center">
-              0
-            </span>
-            <span className="sr-only">Cart</span>
-          </Link>
-        </div>
-      </div>
-    </header>
-  );
+  const { data: session, status } = useSession();
+  const [open, setOpen] = useState(false);
+  const [count, setCount] = useState(0);
+  useEffect(() => {
+    let active = true;
+    const refresh = () => { if (status === 'authenticated') commerceRequest<CartItem[]>('/cart').then(items => { if(active) setCount(items.reduce((total,item) => total + item.quantity,0)); }).catch(() => {}); };
+    refresh(); window.addEventListener('cart-updated',refresh);
+    return () => { active = false; window.removeEventListener('cart-updated',refresh); };
+  }, [status]);
+  const retail = session?.user.role && session.user.role !== 'CUSTOMER';
+  return <header className="sticky top-0 z-50 border-b bg-white/95 backdrop-blur"><div className="container mx-auto flex min-h-20 flex-wrap items-center justify-between gap-4 px-4 py-3"><Link href="/" className="text-2xl font-bold text-primary">Eye-Club.</Link><button className="rounded border px-3 py-2 lg:hidden" aria-expanded={open} aria-controls="main-navigation" onClick={() => setOpen(v => !v)}>Menu</button><nav id="main-navigation" aria-label="Main navigation" className={`${open ? 'flex' : 'hidden'} order-3 w-full flex-wrap gap-5 lg:order-none lg:flex lg:w-auto`}><Link href="/eyeglasses">Eyeglasses</Link><Link href="/sunglasses">Sunglasses</Link><Link href="/try-on">Virtual try-on</Link><Link href="/workstation" className="font-semibold text-teal-700">Workstation</Link><Link href="/pos" className="font-semibold text-indigo-600">POS</Link>{['SUPER_ADMIN','ADMIN'].includes(session?.user.role ?? '') || retail ? <Link href="/admin">Admin</Link> : null}</nav><div className="flex gap-4 text-sm"><Link href="/wishlist">Wishlist</Link><Link href={session ? '/account' : '/login'}>{session ? 'Account' : 'Sign in'}</Link><Link href="/cart">Cart ({status === 'authenticated' ? count : 0})</Link></div><form action="/eyeglasses" role="search" className="order-4 flex w-full gap-2"><label className="sr-only" htmlFor="catalog-search">Search frames</label><input id="catalog-search" name="search" placeholder="Search frames or brands" className="min-w-0 flex-1 rounded-lg border px-3 py-2 text-sm" /><button className="rounded-lg bg-primary px-4 py-2 text-sm text-white">Search</button></form></div></header>;
 }

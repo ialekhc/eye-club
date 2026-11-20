@@ -8,33 +8,35 @@ export function Footer() {
           <div>
             <h3 className="font-semibold mb-4 text-foreground">About Eye-Club</h3>
             <ul className="space-y-3 text-sm text-muted-foreground">
-              <li><Link href="/about" className="hover:text-primary">Our Story</Link></li>
-              <li><Link href="/careers" className="hover:text-primary">Careers</Link></li>
+              <li><Link href="/eyeglasses" className="hover:text-primary">Shop Eyeglasses</Link></li>
+              <li><Link href="/sunglasses" className="hover:text-primary">Shop Sunglasses</Link></li>
               <li><Link href="/stores" className="hover:text-primary">Store Locator</Link></li>
             </ul>
           </div>
           <div>
             <h3 className="font-semibold mb-4 text-foreground">Customer Support</h3>
             <ul className="space-y-3 text-sm text-muted-foreground">
-              <li><Link href="/contact" className="hover:text-primary">Contact Us</Link></li>
-              <li><Link href="/shipping" className="hover:text-primary">Shipping Information</Link></li>
-              <li><Link href="/returns" className="hover:text-primary">Returns & Exchanges</Link></li>
-              <li><Link href="/faq" className="hover:text-primary">FAQs</Link></li>
+              <li><Link href="/stores" className="hover:text-primary">Store Contacts</Link></li>
+              <li><Link href="/account/orders" className="hover:text-primary">Track Your Orders</Link></li>
+              <li><Link href="/account" className="hover:text-primary">Your Account</Link></li>
+              <li><Link href="/book-exam" className="hover:text-primary">Book an Appointment</Link></li>
             </ul>
           </div>
           <div>
             <h3 className="font-semibold mb-4 text-foreground">Eye Care</h3>
             <ul className="space-y-3 text-sm text-muted-foreground">
-              <li><Link href="/book-eye-test" className="hover:text-primary">Book Eye Test</Link></li>
-              <li><Link href="/prescription-guide" className="hover:text-primary">Prescription Guide</Link></li>
-              <li><Link href="/lens-guide" className="hover:text-primary">Lens Guide</Link></li>
+              <li><Link href="/book-exam" className="hover:text-primary">Book Eye Test</Link></li>
+              <li><Link href="/account/prescriptions" className="hover:text-primary">Your Prescriptions</Link></li>
+              <li><Link href="/try-on" className="hover:text-primary">Virtual Try-On</Link></li>
             </ul>
           </div>
           <div>
-            <h3 className="font-semibold mb-4 text-foreground">Legal</h3>
+            <h3 className="font-semibold mb-4 text-foreground">Your Experience</h3>
             <ul className="space-y-3 text-sm text-muted-foreground">
-              <li><Link href="/privacy" className="hover:text-primary">Privacy Policy</Link></li>
-              <li><Link href="/terms" className="hover:text-primary">Terms of Service</Link></li>
+              <li><Link href="/try-on#privacy" className="hover:text-primary">Try-On Privacy</Link></li>
+              <li><Link href="/wishlist" className="hover:text-primary">Saved Frames</Link></li>
+              <li><Link href="/pos" className="hover:text-primary font-medium text-indigo-600">Optical POS</Link></li>
+              <li><Link href="/admin/vendors" className="hover:text-primary">SaaS Vendors</Link></li>
             </ul>
           </div>
         </div>

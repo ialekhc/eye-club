@@ -1,12 +1,16 @@
+'use client';
+import { signOut, useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { User, ShoppingBag, FileText, Settings, LogOut } from 'lucide-react';
 
 export function AccountSidebar({ currentPath }: { currentPath: string }) {
+  const { data: session } = useSession();
   const links = [
+    { name: 'Retail terminal', href: '/pos', icon: Settings },
     { name: 'Profile', href: '/account', icon: User },
     { name: 'My Orders', href: '/account/orders', icon: ShoppingBag },
     { name: 'Prescriptions', href: '/account/prescriptions', icon: FileText },
-    { name: 'Settings', href: '/account/settings', icon: Settings },
+    { name: 'Appointments', href: '/account/appointments', icon: Settings },
   ];
 
   return (
@@ -14,11 +18,11 @@ export function AccountSidebar({ currentPath }: { currentPath: string }) {
       <div className="bg-white rounded-2xl border p-4 shadow-sm sticky top-24">
         <div className="flex items-center gap-4 mb-8 p-2">
           <div className="w-12 h-12 bg-primary text-white rounded-full flex items-center justify-center font-bold text-lg">
-            JD
+            {session?.user.name?.slice(0,2).toUpperCase() ?? "EC"}
           </div>
           <div>
-            <h3 className="font-bold">John Doe</h3>
-            <p className="text-xs text-muted-foreground">john@example.com</p>
+            <h3 className="font-bold">{session?.user.name ?? "My account"}</h3>
+            <p className="text-xs text-muted-foreground">{session?.user.email}</p>
           </div>
         </div>
         
@@ -38,7 +42,7 @@ export function AccountSidebar({ currentPath }: { currentPath: string }) {
             );
           })}
           
-          <button className="flex items-center gap-3 px-4 py-3 mt-4 text-red-500 hover:bg-red-50 rounded-xl transition-colors text-left w-full">
+          <button onClick={() => signOut({ callbackUrl: "/" })} className="flex items-center gap-3 px-4 py-3 mt-4 text-red-500 hover:bg-red-50 rounded-xl transition-colors text-left w-full">
             <LogOut className="w-5 h-5" />
             Sign Out
           </button>

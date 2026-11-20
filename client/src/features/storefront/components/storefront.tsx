@@ -73,10 +73,10 @@ export function Storefront() {
   };
 
   return <>
-    <a href="#collection" className="skip-link">Skip to collection</a>
+    <div className="flex justify-end px-4 lg:px-8 pt-4"><a href="#collection" className="skip-link">Skip <ArrowRight size={15} strokeWidth={2.4} /></a></div>
     <header className="shop-header">
       <Link href="/" aria-label="Eye Club home" className="wordmark"><Eye size={27} strokeWidth={1.6} /><span>eye club<span className="wordmark-dot">.</span></span></Link>
-      <nav className="shop-nav" aria-label="Main navigation"><a href="#collection">Shop frames</a><a href="#brands">Brands</a><Link href="/try-on">Virtual try-on</Link></nav>
+      <nav className="shop-nav" aria-label="Main navigation"><a href="#collection">Shop frames</a><a href="#brands">Brands</a><Link href="/try-on">Virtual try-on</Link><Link href="/pos">POS</Link></nav>
       <button className="bag-button" type="button" onClick={() => setBagOpen(true)} aria-label={`Open bag, ${bag.length} items`}><ShoppingBag size={18} /><span>Bag</span><b>{bag.length}</b></button>
     </header>
 
@@ -96,7 +96,7 @@ export function Storefront() {
       <section id="brands" className="brand-story"><div><p className="eyebrow">Why Eye Club</p><h2>A better way to<br /><em>choose eyewear.</em></h2></div><div className="brand-story-copy"><p>We bring together independent eyewear brands that care about shape, material and the details you notice after the first glance.</p><p>Shortlist a pair, try it on privately, and buy from the brand that made it. No account required.</p><Link href="/try-on" className="text-action">Open the fitting room <ArrowRight size={15} /></Link></div></section>
     </main>
 
-    <footer className="shop-footer"><span className="font-medium text-stone-700">eye club.</span><span>Independent eyewear, fitted to you.</span><span><Link href="/dashboard/products">Merchant login</Link></span></footer>
+    <footer className="shop-footer"><span className="font-medium text-stone-700">eye club.</span><span>Independent eyewear, fitted to you.</span><span><Link href="/admin">Merchant login</Link></span></footer>
     {notice && <output className="shop-toast">{notice}</output>}
     {bagOpen && <div className="bag-backdrop"><button type="button" className="bag-dismiss" aria-label="Close bag" onClick={() => setBagOpen(false)} /><dialog open className="bag-drawer" aria-labelledby="bag-title"><div className="bag-heading"><div><p className="eyebrow">Your selection</p><h2 id="bag-title">The bag <span>{bag.length}</span></h2></div><button type="button" className="icon-button" aria-label="Close bag" onClick={() => setBagOpen(false)}><X size={19} /></button></div>{bag.length === 0 ? <div className="bag-empty"><ShoppingBag size={30} strokeWidth={1.3} /><p>Your bag is waiting.</p><span>Add a frame when something feels like you.</span></div> : <><div className="bag-items">{bag.map((product) => <div className="bag-item" key={product.id}><Image src={product.image} alt="" width={180} height={65} unoptimized /><div><p>{product.brand}</p><h3>{product.name}</h3><span>{money.format(product.price)}</span></div><button type="button" aria-label={`Remove ${product.name}`} onClick={() => setBag((current) => current.filter((item) => item.id !== product.id))}><X size={15} /></button></div>)}</div><div className="bag-total"><span>Subtotal</span><strong>{money.format(bag.reduce((total, item) => total + item.price, 0))}</strong></div><button type="button" className="checkout-button" onClick={() => setNotice("Checkout is ready to connect to your payment provider.")}>Continue to checkout <ArrowRight size={16} /></button><p className="checkout-note">Secure checkout and shipping are configured by each independent brand.</p></>}</dialog></div>}
   </>;

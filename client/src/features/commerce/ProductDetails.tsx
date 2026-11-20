@@ -1,0 +1,22 @@
+'use client';
+import Image from 'next/image';
+import Link from 'next/link';
+import { useState } from 'react';
+import { commerceRequest, jsonBody, money } from '@/lib/commerce-api';
+import { RemoteError } from '@/components/RemoteState';
+export type ProductDetail = { id: string; slug: string; name: string; category?: { name: string; slug: string }; brand?: { name: string }; frameType?: string; gender?: string; description?: string; basePrice: string; discountPrice?: string | null; prescriptionCompatible?: boolean; frameShape?: string; material?: string; frameWidth?: string; lensWidth?: string; vendor?: { slug: string } | null; frameAsset?: unknown; variants: Array<{ id: string; color: string; size: string; price?: string | null; images: Array<{ url: string; altText?: string; isPrimary?: boolean }>; inventory?: Array<{ availableQuantity: number }> }> };
+export function ProductDetails({ product }: { product: ProductDetail }) {
+  const [variantId, setVariantId] = useState(product.variants[0]?.id ?? '');
+  const [imageIndex, setImageIndex] = useState(0);
+  const [busy, setBusy] = useState(false);
+  const [notice, setNotice] = useState('');
+  const [error, setError] = useState('');
+  const variant = product.variants.find(value => value.id === variantId);
+  async function action(wishlist = false) {
+    if (!variant) return;
+    setBusy(true); setError(''); setNotice('');
+    try { await commerceRequest(wishlist ? '/wishlist' : '/cart', { method: 'POST', body: jsonBody(wishlist ? { productId: product.id } : { productId: product.id, productVariantId: variant.id, quantity: 1 }) }); setNotice(wishlist ? 'Saved to wishlist.' : 'Added to cart.'); window.dispatchEvent(new Event('cart-updated')); }
+    catch(e) { setError((e as Error).message); } finally { setBusy(false); }
+  }
+  return <div className="container mx-auto grid gap-10 px-4 py-12 lg:grid-cols-2"><section><div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-muted">{variant?.images[imageIndex] ? <Image src={variant.images[imageIndex]!.url} alt={variant.images[imageIndex]!.altText ?? product.name} fill className="object-contain" /> : <p className="p-8">No product image available</p>}</div><div className="mt-4 flex gap-3">{variant?.images.map((image,index) => <button key={image.url} aria-label={`View product image ${index + 1}`} onClick={() => setImageIndex(index)} className="relative h-20 w-20 rounded-lg border"><Image src={image.url} alt="" fill className="object-contain" /></button>)}</div></section><section><h1 className="text-3xl font-bold">{product.name}</h1><p className="my-4 text-2xl">{money(variant?.price ?? product.discountPrice ?? product.basePrice)}</p><p className="mb-6 text-slate-600">{product.description}</p><label className="block font-medium">Color and size<select className="my-3 w-full rounded-xl border p-3" value={variantId} onChange={event => { setVariantId(event.target.value); setImageIndex(0); setNotice(''); }}>{product.variants.map(value => <option key={value.id} value={value.id}>{value.color} · {value.size}</option>)}</select></label><p>{product.frameShape} {product.material}</p>{product.frameWidth ? <p>Frame width: {product.frameWidth} mm · Lens width: {product.lensWidth ?? '—'} mm</p> : null}{error ? <RemoteError message={error} /> : null}{notice ? <p role="status" className="my-4 text-green-800">{notice} <Link href="/cart" className="underline">View cart</Link></p> : null}<div className="mt-6 grid gap-3"><button disabled={busy || !variant} onClick={() => action()} className="rounded-xl bg-primary p-4 text-white disabled:opacity-50">Add frame to cart</button>{product.prescriptionCompatible && variant ? <Link href={`/products/${product.slug}/lenses?variant=${encodeURIComponent(variant.id)}`} className="rounded-xl border p-4 text-center">Choose lenses and prescription</Link> : null}<button disabled={busy || !variant} onClick={() => action(true)} className="rounded-xl border p-3">Save to wishlist</button><Link href={product.frameAsset && product.vendor ? `/try-on?organization=${encodeURIComponent(product.vendor.slug)}&frame=${encodeURIComponent(product.id)}` : "/try-on"} className="rounded-xl border p-3 text-center">Open virtual try-on studio</Link><p className="text-sm text-slate-500">{product.frameAsset ? "This frame is available in the merchant fitting collection." : "This product has no calibrated try-on asset yet. Explore the studio sample collection."}</p></div></section></div>;
+}

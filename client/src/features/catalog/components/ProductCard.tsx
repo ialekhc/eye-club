@@ -2,24 +2,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { Heart } from "lucide-react";
 
-interface ProductVariant {
-  id: string;
-  color: string;
-  price: number | null;
-  images: { url: string; altText: string; isPrimary: boolean }[];
-}
-
-interface ProductCardProps {
-  product: {
-    name: string;
-    slug: string;
-    basePrice: string;
-    frameShape: string;
-    frameType: string;
-    brand?: { name: string };
-    variants: ProductVariant[];
-  };
-}
+import type { ProductDetail } from '@/features/commerce/ProductDetails';
+type ProductCardProps = { product: ProductDetail };
 
 export function ProductCard({ product }: ProductCardProps) {
   const defaultVariant = product.variants[0];
@@ -28,15 +12,15 @@ export function ProductCard({ product }: ProductCardProps) {
   
   // Format price
   const price = defaultVariant?.price ? defaultVariant.price : parseFloat(product.basePrice);
-  const formattedPrice = new Intl.NumberFormat('en-NP', { style: 'currency', currency: 'NPR' }).format(price);
+  const formattedPrice = new Intl.NumberFormat('en-NP', { style: 'currency', currency: 'NPR' }).format(Number(price));
 
   return (
     <div className="group relative flex flex-col gap-3 rounded-2xl bg-white border p-3 hover:shadow-md transition-shadow">
       {/* Wishlist Button */}
-      <button className="absolute top-4 right-4 z-10 p-2 rounded-full bg-white/80 hover:bg-white text-muted-foreground hover:text-red-500 shadow-sm transition-colors">
+      <Link href={`/products/${product.slug}`} className="absolute top-4 right-4 z-10 p-2 rounded-full bg-white/80 hover:bg-white text-muted-foreground hover:text-red-500 shadow-sm transition-colors">
         <Heart className="h-4 w-4" />
         <span className="sr-only">Add to wishlist</span>
-      </button>
+      </Link>
 
       {/* Image Gallery */}
       <Link href={`/products/${product.slug}`} className="relative aspect-[4/3] rounded-xl overflow-hidden bg-muted">
@@ -46,7 +30,7 @@ export function ProductCard({ product }: ProductCardProps) {
               src={primaryImage} 
               alt={product.name} 
               fill 
-              className="object-cover transition-opacity duration-300 group-hover:opacity-0" 
+              className={`object-cover transition-opacity duration-300 ${secondaryImage ? "group-hover:opacity-0" : ""}`} 
             />
             {secondaryImage && (
               <Image 

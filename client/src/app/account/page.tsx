@@ -1,37 +1,14 @@
-export default function AccountProfilePage() {
-  return (
-    <div className="bg-white rounded-2xl border p-6 md:p-8 shadow-sm">
-      <h2 className="text-2xl font-bold mb-6">Profile Information</h2>
-      
-      <form className="max-w-xl space-y-6">
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium mb-1">First Name</label>
-            <input type="text" className="w-full border rounded-lg p-3" defaultValue="John" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Last Name</label>
-            <input type="text" className="w-full border rounded-lg p-3" defaultValue="Doe" />
-          </div>
-        </div>
-        
-        <div>
-          <label className="block text-sm font-medium mb-1">Email Address</label>
-          <input type="email" className="w-full border rounded-lg p-3 bg-muted text-muted-foreground" defaultValue="john@example.com" disabled />
-          <p className="text-xs text-muted-foreground mt-1">To change your email, please contact support.</p>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-1">Phone Number</label>
-          <input type="tel" className="w-full border rounded-lg p-3" defaultValue="+977-9800000000" />
-        </div>
-        
-        <div className="pt-4">
-          <button type="button" className="px-6 py-3 bg-primary text-primary-foreground font-medium rounded-xl hover:bg-primary/90 transition-colors">
-            Save Changes
-          </button>
-        </div>
-      </form>
-    </div>
-  );
+'use client';
+import { FormEvent, useState } from 'react';
+import { useResource } from '@/lib/use-resource';
+import { commerceRequest, jsonBody } from '@/lib/commerce-api';
+import { RemoteError } from '@/components/RemoteState';
+type Profile = { firstName: string; lastName: string; phone?: string; email: string };
+export default function ProfilePage() {
+  const { data, error, loading, reload } = useResource<Profile>('/users/profile');
+  const [notice, setNotice] = useState('');
+  const [saveError, setSaveError] = useState('');
+  const [busy, setBusy] = useState(false);
+  async function save(event: FormEvent<HTMLFormElement>) { event.preventDefault(); const values = Object.fromEntries(new FormData(event.currentTarget)); setBusy(true); setSaveError(''); setNotice(''); try { await commerceRequest('/users/profile', { method: 'PUT', body: jsonBody(values) }); setNotice('Profile saved.'); reload(); } catch(e) { setSaveError((e as Error).message); } finally { setBusy(false); } }
+  return <section className="rounded-xl border bg-white p-6"><h2 className="mb-6 text-2xl font-bold">Profile</h2>{error || saveError ? <RemoteError message={error || saveError} retry={reload} /> : null}{loading ? <p>Loading profile…</p> : null}{data ? <form key={JSON.stringify(data)} onSubmit={save} className="space-y-4"><p>{data.email}</p>{[['firstName','First name'],['lastName','Last name'],['phone','Phone']].map(([key,label]) => <label key={key} className="block">{label}<input name={key} defaultValue={data[key as keyof Profile] ?? ''} required={key !== 'phone'} maxLength={80} className="mt-1 w-full rounded-lg border p-3" /></label>)}<button disabled={busy} className="rounded-lg bg-primary p-3 text-white">{busy ? 'Saving…' : 'Save changes'}</button>{notice ? <p role="status">{notice}</p> : null}</form> : null}</section>;
 }

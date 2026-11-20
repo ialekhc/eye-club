@@ -1,13 +1,29 @@
+'use client';
+import { signOut } from 'next-auth/react';
 import Link from 'next/link';
-import { LayoutDashboard, ShoppingCart, Box, Users, Settings, LogOut } from 'lucide-react';
+import {
+  LayoutDashboard,
+  ShoppingCart,
+  Box,
+  Users,
+  Settings,
+  LogOut,
+  Building2,
+  MonitorSmartphone,
+  Network,
+} from 'lucide-react';
 
 export function AdminSidebar({ currentPath }: { currentPath: string }) {
   const links = [
     { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
+    { name: 'Clinical Workstation', href: '/workstation', icon: MonitorSmartphone },
+    { name: 'Microservices', href: '/admin/microservices', icon: Network },
+    { name: 'SaaS Vendors', href: '/admin/vendors', icon: Building2 },
+    { name: 'Optical POS', href: '/pos', icon: MonitorSmartphone },
     { name: 'Orders', href: '/admin/orders', icon: ShoppingCart },
     { name: 'Catalog', href: '/admin/catalog', icon: Box },
-    { name: 'Customers', href: '/admin/customers', icon: Users },
-    { name: 'Settings', href: '/admin/settings', icon: Settings },
+    { name: 'Try-on analytics', href: '/admin/analytics', icon: Users },
+    { name: 'Widget setup', href: '/admin/widget', icon: Settings },
   ];
 
   return (
@@ -34,7 +50,7 @@ export function AdminSidebar({ currentPath }: { currentPath: string }) {
         })}
       </nav>
       
-      <button className="flex items-center gap-3 px-4 py-3 mt-4 text-red-400 hover:bg-slate-800 rounded-lg transition-colors text-left w-full">
+      <button onClick={() => signOut({ callbackUrl: "/" })} className="flex items-center gap-3 px-4 py-3 mt-4 text-red-400 hover:bg-slate-800 rounded-lg transition-colors text-left w-full">
         <LogOut className="w-5 h-5" />
         Exit Admin
       </button>

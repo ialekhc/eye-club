@@ -52,10 +52,11 @@ async function request<T>(path: string, init: RequestInit = {}, organizationId?:
   const token = getToken();
   if (token) headers.set("authorization", `Bearer ${token}`);
   if (organizationId) headers.set("x-organization-id", organizationId);
-  const response = await fetch(`${apiOrigin()}/api/v1${path}`, { ...init, headers });
+  const endpoint = typeof window !== "undefined" && (path.startsWith("/auth/password-reset") || path.startsWith("/auth/email-verification") || path.startsWith("/public/") || path.startsWith("/tryons/")) ? `/api/backend${path}` : `${apiOrigin()}/api/v1${path}`;
+  const response = await fetch(endpoint, { ...init, headers });
   if (!response.ok) {
     let message = `API request failed (${response.status})`;
-    try { const body = await response.json() as { message?: string | string[] }; message = Array.isArray(body.message) ? body.message.join(", ") : body.message ?? message; } catch { /* preserve status message */ }
+    try { const body = await response.json() as { message?: string | string[]; error?: { message?: string | string[] } }; const detail = body.error?.message ?? body.message; message = Array.isArray(detail) ? detail.join(", ") : detail ?? message; } catch { /* preserve status message */ }
     throw new ApiClientError(response.status, message);
   }
   return response.json() as Promise<T>;
@@ -113,7 +114,7 @@ export function trackTryOnEvent(publicId: string, eventType: string, eyewearId?:
 export function getAnalyticsOverview(organizationId: string, days = 30) { return request<AnalyticsOverview>(`/analytics/overview?days=${days}`, undefined, organizationId); }
 export function getWidgetConfig(publicKey: string) { return request<WidgetConfig>(`/widget/config/${encodeURIComponent(publicKey)}`); }
 export type PublicCatalogueProduct = { id: string; name: string; sku: string; type: ProductType; frameShape: string | null; frameColor: string | null; price: string | number | null; currency: string; productUrl: string | null; brand: { id: string; name: string } | null; category: { id: string; name: string } | null; calibration: Record<string, string | number> | null; asset: { storageKey: string; mimeType: string; width: number; height: number; url: string } | null };
-export async function getPublicCatalogue(organizationSlug: string, params: { brand?: string; category?: string; type?: ProductType } = {}) { const query = new URLSearchParams(); for (const [key, value] of Object.entries(params)) { if (value) query.set(key, value); } const path = withQuery(`/public/catalogue/${encodeURIComponent(organizationSlug)}`, query); const result = await request<PublicCatalogueProduct[]>(path); return result.map((item) => ({ ...item, asset: item.asset ? { ...item.asset, url: `${apiOrigin()}${item.asset.url}` } : null })); }
+export async function getPublicCatalogue(organizationSlug: string, params: { brand?: string; category?: string; type?: ProductType } = {}) { const query = new URLSearchParams(); for (const [key, value] of Object.entries(params)) { if (value) query.set(key, value); } const path = withQuery(`/public/catalogue/${encodeURIComponent(organizationSlug)}`, query); const result = await request<PublicCatalogueProduct[]>(path); return result.map((item) => ({ ...item, asset: item.asset ? { ...item.asset, url: typeof window !== "undefined" ? item.asset.url.replace("/api/v1/", "/api/backend/") : `${apiOrigin()}${item.asset.url}` } : null })); }
 export type WidgetConfiguration = { id: string; publicKey: string; allowedOrigins: unknown; enabled: boolean; createdAt?: string; updatedAt?: string };
 export function listWidgetConfigurations(organizationId: string) { return request<WidgetConfiguration[]>(`/widget/${encodeURIComponent(organizationId)}/configurations`, undefined, organizationId); }
 export function createWidgetConfiguration(organizationId: string, allowedOrigins: string[]) { return request<WidgetConfiguration>(`/widget/${encodeURIComponent(organizationId)}/configurations`, { method: "POST", body: JSON.stringify({ allowedOrigins }) }, organizationId); }
