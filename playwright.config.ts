@@ -6,5 +6,5 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   reporter: process.env.CI ? "github" : "list",
   use: { baseURL: "http://127.0.0.1:3100", trace: "on-first-retry", ...devices["Desktop Chrome"] },
-  webServer: { command: "cd client && ../node_modules/.bin/next dev --hostname 127.0.0.1 --port 3100", url: "http://127.0.0.1:3100/try-on", reuseExistingServer: !process.env.CI, timeout: 120_000 },
+  webServer: { command: "cd client && ../node_modules/.bin/next dev --hostname 127.0.0.1 --port 3100", url: "http://127.0.0.1:3100/try-on", reuseExistingServer: !process.env.CI, env: { API_INTERNAL_URL: process.env.API_INTERNAL_URL ?? "http://127.0.0.1:4000", NEXTAUTH_URL: "http://127.0.0.1:3100", NEXTAUTH_SECRET: "playwright-local-session-secret-do-not-deploy" }, timeout: 120_000 },
 });

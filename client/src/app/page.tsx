@@ -33,7 +33,7 @@ export default function HomePage() {
               Eyewear engineered for perfect vision and effortless style. Experience the pinnacle of optical craftsmanship.
             </p>
             
-            <div className="flex flex-col sm:flex-row gap-5">
+            <div className="flex flex-col sm:flex-row flex-wrap gap-4">
               <Link 
                 href="/eyeglasses" 
                 className="group flex items-center justify-between px-8 py-4 rounded-2xl bg-primary text-primary-foreground font-semibold shadow-lg hover:shadow-primary/30 hover:-translate-y-1 transition-all"
@@ -46,6 +46,12 @@ export default function HomePage() {
                 className="flex items-center justify-center px-8 py-4 rounded-2xl glass-dark text-white font-semibold hover:-translate-y-1 transition-all"
               >
                 Virtual Try-On
+              </Link>
+              <Link 
+                href="/pos" 
+                className="flex items-center justify-center px-8 py-4 rounded-2xl border border-primary/20 bg-white/90 text-primary font-semibold hover:-translate-y-1 transition-all"
+              >
+                Optical POS
               </Link>
             </div>
           </div>

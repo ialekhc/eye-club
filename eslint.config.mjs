@@ -5,6 +5,6 @@ const config = [
   ...nextVitals,
   ...nextTs,
   { settings: { next: { rootDir: "client/" } } },
-  { ignores: ["**/.next/**", "**/node_modules/**", "**/public/vision/**", "**/next-env.d.ts"] },
+  { ignores: ["**/.next/**", "**/dist/**", "**/node_modules/**", "**/public/vision/**", "**/next-env.d.ts"] },
 ];
 export default config;

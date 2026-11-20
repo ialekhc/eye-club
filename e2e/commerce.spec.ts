@@ -1,0 +1,46 @@
+import { expect, test } from '@playwright/test';
+test.describe('Connected commerce', () => {
+  test.skip(process.env.COMMERCE_E2E !== '1', 'Requires migrated, seeded API on port 4000.');
+  test('customer registers, buys a frame, and sees the persisted order', async ({ page, request }) => {
+    const products = await request.get('http://127.0.0.1:4000/api/v1/catalog/products');
+    expect(products.ok()).toBeTruthy();
+    const product = (await products.json()).find((item: { variants: unknown[] }) => item.variants.length);
+    await page.goto('/register');
+    await page.getByLabel('First name').fill('Browser');
+    await page.getByLabel('Last name').fill('Customer');
+    await page.getByLabel('Email', { exact:true }).fill(`browser-${Date.now()}@example.test`);
+    await page.getByLabel('Password (at least 12 characters)').fill('browser-test-password-2026');
+    await page.getByRole('button', { name:'Create account', exact:true }).click();
+    await expect(page).toHaveURL(/\/account$/);
+    await page.goto(`/products/${product.slug}`);
+    await expect(page.getByRole('heading', {name:product.name,exact:true})).toBeVisible();
+    await page.getByRole('button',{name:'Add frame to cart',exact:true}).click();
+    await expect(page.getByRole('status').filter({hasText:'Added to cart'})).toBeVisible();
+    await page.goto('/cart');
+    await expect(page.getByRole('heading',{name:product.name,exact:true})).toBeVisible();
+    await page.getByRole('link',{name:'Proceed to checkout'}).click();
+    for(const [label,value] of [['Full name','Browser Customer'],['Phone number','9800000000'],['Province','Bagmati'],['District','Kathmandu'],['Municipality','Kathmandu'],['Street address','Browser Test Street']]) await page.getByLabel(label!,{exact:true}).fill(value!);
+    await page.getByRole('button',{name:'Place order',exact:true}).click();
+    await expect(page.getByRole('heading',{name:'Order received',exact:true})).toBeVisible();
+    const confirmation = await page.locator('p').filter({hasText:/^EC-/}).innerText();
+    await page.screenshot({path:'test-results/checkout-confirmation.png',fullPage:true});
+    await page.getByRole('link',{name:'Track your order',exact:true}).click();
+    await expect(page.getByRole('heading',{name:confirmation,exact:true})).toBeVisible();
+    await page.goto('/cart');
+    await expect(page.getByText('Your cart is empty.')).toBeVisible();
+  });
+  test('admin sees persisted metrics and opens a real register', async ({page}) => {
+    await page.goto('/login');
+    await page.getByLabel('Email',{exact:true}).fill('admin@eye-club.local');
+    await page.getByLabel('Password',{exact:true}).fill(process.env.SEED_OWNER_PASSWORD ?? '');
+    await page.getByRole('button',{name:'Sign In',exact:true}).click();
+    await expect(page).toHaveURL(/\/admin$/);
+    await expect(page.getByRole('heading',{name:'Retail overview'})).toBeVisible();
+    await page.goto('/admin/catalog');
+    await expect(page.getByRole('heading',{name:'Catalogue and inventory'})).toBeVisible();
+    await expect(page.getByRole('heading',{name:'Eye-Club Air 02'})).toBeVisible();
+    await page.goto('/pos');
+    await expect(page.getByText('Eye-Club Air 02',{exact:true}).first()).toBeVisible();
+    await page.screenshot({path:'test-results/pos-terminal.png',fullPage:true});
+  });
+});

@@ -1,0 +1,6 @@
+{
+  "name": "@eyewear/platform-admin",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Eye Club SaaS Platform Super-Admin Control Plane"
+}

@@ -1,0 +1,11 @@
+{
+  "name": "@eyewear/desktop",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Eye Club Staff-Assisted Optical Workstation (Electron Desktop Shell)",
+  "main": "dist/main.js",
+  "scripts": {
+    "dev:electron": "electron dist/main.js",
+    "build": "tsc -p tsconfig.json"
+  }
+}

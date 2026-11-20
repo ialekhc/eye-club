@@ -20,7 +20,22 @@
     "test": "vitest run",
     "assets:setup": "node scripts/setup-vision.mjs",
     "build:widget": "npm run build --workspace=@eyewear/widget",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "dev:api": "node scripts/dev-microservices.mjs",
+    "dev:microservices": "node scripts/dev-microservices.mjs",
+    "build:api": "npm run build --workspace=@eyewear/api",
+    "start:api": "npm run start --workspace=@eyewear/api",
+    "start:gateway": "MICROSERVICE_ROLE=api-gateway PORT=4000 npm run start --workspace=@eyewear/api",
+    "start:identity": "MICROSERVICE_ROLE=identity-tenant-service PORT=4001 npm run start --workspace=@eyewear/api",
+    "start:catalog": "MICROSERVICE_ROLE=catalog-tryon-service PORT=4002 npm run start --workspace=@eyewear/api",
+    "start:commerce": "MICROSERVICE_ROLE=commerce-order-service PORT=4003 npm run start --workspace=@eyewear/api",
+    "start:clinical": "MICROSERVICE_ROLE=clinical-store-service PORT=4004 npm run start --workspace=@eyewear/api",
+    "start:pos": "MICROSERVICE_ROLE=pos-lab-service PORT=4005 npm run start --workspace=@eyewear/api",
+    "db:generate": "prisma generate --schema server/prisma/schema.prisma",
+    "db:validate": "prisma validate --schema server/prisma/schema.prisma",
+    "db:migrate": "prisma migrate deploy --schema server/prisma/schema.prisma",
+    "db:seed": "npm run prisma:seed --workspace=@eyewear/api",
+    "typecheck:api": "tsc -p server/tsconfig.json --noEmit"
   },
   "devDependencies": {
     "@types/node": "22.20.3",

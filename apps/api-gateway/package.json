@@ -1,0 +1,9 @@
+{
+  "name": "@eyewear/api-gateway",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Eye Club Central API Gateway & Reverse Proxy (:4000)",
+  "scripts": {
+    "start": "MICROSERVICE_ROLE=api-gateway PORT=4000 npm run start --workspace=@eyewear/api"
+  }
+}
