@@ -1,79 +1,16 @@
-import { Search, Plus, Filter } from 'lucide-react';
-import Image from 'next/image';
-
+'use client';
+import Link from 'next/link';
+import { FormEvent, useState } from 'react';
+import { useResource } from '@/lib/use-resource';
+import { commerceRequest, jsonBody, money, Store } from '@/lib/commerce-api';
+import { RemoteError } from '@/components/RemoteState';
+type Product = { id:string;name:string;slug:string;status:string;basePrice:string;variants:Array<{id:string;sku:string;color:string;size:string;inventory:Array<{storeId:string;availableQuantity:number}>}> };
+type Option = {id:string;name:string};
 export default function AdminCatalogPage() {
-  return (
-    <div>
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
-        <h1 className="text-3xl font-bold text-slate-900">Catalog</h1>
-        
-        <div className="flex gap-3">
-          <div className="relative">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input type="text" placeholder="Search products..." className="pl-9 pr-4 py-2 border rounded-lg text-sm w-64 focus:outline-none focus:ring-2 focus:ring-primary/20" />
-          </div>
-          <button className="p-2 border rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">
-            <Filter className="w-4 h-4" />
-          </button>
-          <button className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium">
-            <Plus className="w-4 h-4" /> Add Product
-          </button>
-        </div>
-      </div>
-
-      <div className="bg-white rounded-2xl border shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead className="bg-slate-50">
-              <tr className="text-slate-500 text-sm border-b">
-                <th className="py-4 px-6 font-medium">Product</th>
-                <th className="py-4 px-6 font-medium">Category</th>
-                <th className="py-4 px-6 font-medium">Price</th>
-                <th className="py-4 px-6 font-medium">Inventory</th>
-                <th className="py-4 px-6 font-medium">Status</th>
-                <th className="py-4 px-6 font-medium text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="text-sm">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <tr key={i} className="border-b last:border-0 hover:bg-slate-50/50 transition-colors">
-                  <td className="py-4 px-6">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 bg-slate-100 rounded-lg relative overflow-hidden shrink-0">
-                        <Image src="https://images.unsplash.com/photo-1574258495973-f010dfbb5371?auto=format&fit=crop&q=80&w=200" alt="Frame" fill className="object-cover" />
-                      </div>
-                      <div>
-                        <div className="font-medium text-slate-900">Eye-Club Air 02</div>
-                        <div className="text-xs text-slate-500">EC-AIR-02</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="py-4 px-6 text-slate-600">Eyeglasses</td>
-                  <td className="py-4 px-6 font-medium">NPR 2,799</td>
-                  <td className="py-4 px-6">
-                    <span className="text-green-600 font-medium">124 in stock</span>
-                  </td>
-                  <td className="py-4 px-6">
-                    <span className="px-2 py-1 bg-green-100 text-green-700 rounded-md text-xs font-bold">PUBLISHED</span>
-                  </td>
-                  <td className="py-4 px-6 text-right">
-                    <button className="text-indigo-600 hover:underline font-medium mr-3">Edit</button>
-                    <button className="text-red-500 hover:underline font-medium">Archive</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        
-        <div className="p-4 border-t bg-slate-50 flex justify-between items-center text-sm text-slate-500">
-          <span>Showing 1 to 5 of 1,204 products</span>
-          <div className="flex gap-2">
-            <button className="px-3 py-1 border rounded bg-white hover:bg-slate-50 disabled:opacity-50" disabled>Previous</button>
-            <button className="px-3 py-1 border rounded bg-white hover:bg-slate-50">Next</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+  const products = useResource<Product[]>('/admin/products'); const stores = useResource<Store[]>('/stores'); const categories = useResource<Option[]>('/catalog/categories'); const brands = useResource<Option[]>('/catalog/brands');
+  const [search,setSearch] = useState(''); const [show,setShow] = useState(false); const [error,setError] = useState(''); const [busy,setBusy] = useState(false);
+  async function create(event: FormEvent<HTMLFormElement>) {event.preventDefault(); const fields=Object.fromEntries(new FormData(event.currentTarget)); setBusy(true);setError('');try{await commerceRequest('/admin/products',{method:'POST',body:jsonBody({...fields,basePrice:Number(fields.basePrice),stock:Number(fields.stock)})});setShow(false);products.reload();}catch(e){setError((e as Error).message);}finally{setBusy(false);}}
+  async function status(id:string,status:string){setBusy(true);setError('');try{await commerceRequest(`/admin/products/${id}/status`,{method:'PUT',body:jsonBody({status})});products.reload();}catch(e){setError((e as Error).message);}finally{setBusy(false);}}
+  async function stock(event:FormEvent<HTMLFormElement>,id:string){event.preventDefault();const values=Object.fromEntries(new FormData(event.currentTarget));setBusy(true);setError('');try{await commerceRequest(`/admin/inventory/${id}`,{method:'PUT',body:jsonBody({storeId:values.storeId,quantity:Number(values.quantity)})});products.reload();}catch(e){setError((e as Error).message);}finally{setBusy(false);}}
+  return <div><h1 className="mb-6 text-3xl font-bold">Catalogue and inventory</h1><div className="mb-6 flex gap-4"><input aria-label="Search products" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search name or SKU" className="rounded-lg border p-3"/><button onClick={()=>setShow(v=>!v)} className="rounded-lg bg-primary p-3 text-white">{show?'Cancel':'Add product'}</button></div>{error || products.error ? <RemoteError message={error || products.error} retry={products.reload} /> : null}{show ? <form onSubmit={create} className="mb-8 grid gap-4 rounded-xl border bg-white p-6 sm:grid-cols-2">{[['name','Product name'],['slug','URL slug (lowercase-with-hyphens)'],['sku','SKU'],['color','Color'],['size','Size'],['basePrice','Price (NPR)'],['stock','Opening stock'],['description','Description'],['frameShape','Frame shape']].map(([name,label])=><label key={name}>{label}<input name={name} required={!['description','frameShape'].includes(name!)} type={['stock','basePrice'].includes(name!)?'number':'text'} min="0" step={name==='basePrice'?'0.01':'1'} className="block w-full rounded border p-2"/></label>)}<label>Store<select required name="storeId" className="block w-full rounded border p-2">{stores.data?.map(store=><option key={store.id} value={store.id}>{store.name}</option>)}</select></label><label>Category<select name="categoryId" className="block w-full rounded border p-2"><option value="">Uncategorized</option>{categories.data?.map(row=><option key={row.id} value={row.id}>{row.name}</option>)}</select></label><label>Brand<select name="brandId" className="block w-full rounded border p-2"><option value="">Unbranded</option>{brands.data?.map(row=><option key={row.id} value={row.id}>{row.name}</option>)}</select></label><button disabled={busy} className="rounded-lg bg-primary p-3 text-white">Save draft product</button></form>:null}{products.loading ? <p>Loading products…</p>:null}{products.data?.filter(product=>`${product.name} ${product.variants.map(v=>v.sku).join(' ')}`.toLowerCase().includes(search.toLowerCase())).map(product=><article key={product.id} className="my-4 rounded-xl border bg-white p-6"><h2 className="text-xl font-bold">{product.name}</h2><p>{money(product.basePrice)}</p><Link className="my-3 inline-block underline" href={`/try-on?manageProduct=${product.id}`}>Upload and calibrate try-on frame</Link><label>Status<select disabled={busy} value={product.status} onChange={e=>status(product.id,e.target.value)} className="ml-3 rounded border p-2">{['DRAFT','PUBLISHED','ARCHIVED'].map(value=><option key={value}>{value}</option>)}</select></label>{product.variants.map(variant=><div key={variant.id} className="mt-4 rounded-lg bg-slate-50 p-4"><h3>{variant.sku} · {variant.color} · {variant.size}</h3>{variant.inventory.map(row=><p key={row.storeId}>{stores.data?.find(store=>store.id===row.storeId)?.name??row.storeId}: {row.availableQuantity} available</p>)}<form onSubmit={e=>stock(e,variant.id)} className="mt-3 flex flex-wrap gap-3"><select aria-label="Inventory store" name="storeId" className="rounded border p-2">{stores.data?.map(store=><option key={store.id} value={store.id}>{store.name}</option>)}</select><input aria-label="Set available quantity" type="number" name="quantity" required min="0" step="1" placeholder="Available quantity" className="rounded border p-2"/><button disabled={busy} className="rounded border p-2">Set stock</button></form></div>)}</article>)}</div>;
 }

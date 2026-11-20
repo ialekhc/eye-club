@@ -1,21 +1,10 @@
-'use client';
-
-import { AdminSidebar } from "@/components/layout/AdminSidebar";
-import { usePathname } from "next/navigation";
-
-export default function AdminLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
-  const pathname = usePathname();
-
-  return (
-    <div className="flex min-h-[calc(100vh-80px)] bg-slate-50">
-      <AdminSidebar currentPath={pathname} />
-      <main className="flex-1 p-6 lg:p-10 overflow-y-auto">
-        {children}
-      </main>
-    </div>
-  );
+import { getServerSession } from 'next-auth';
+import { redirect } from 'next/navigation';
+import { authOptions } from '@/lib/auth';
+import { AdminShell } from '@/components/AdminShell';
+export default async function Layout({ children }: { children: React.ReactNode }) {
+  const session = await getServerSession(authOptions);
+  if (!session?.accessToken) redirect('/login');
+  if (!['SUPER_ADMIN', 'ADMIN'].includes(session.user.role)) redirect('/pos');
+  return <AdminShell>{children}</AdminShell>;
 }
