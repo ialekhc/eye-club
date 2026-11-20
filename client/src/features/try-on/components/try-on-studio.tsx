@@ -1,6 +1,8 @@
 "use client";
 
+import { commerceRequest, jsonBody } from '@/lib/commerce-api';
 import { useEffect, useRef, useState, type ChangeEvent, type DragEvent } from "react";
+import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, Check, CircleHelp, Eye, ImagePlus, LoaderCircle, LockKeyhole, RotateCcw, ScanFace, ShieldCheck, Upload, X, SlidersHorizontal, Plus } from "lucide-react";
 import { Button } from "@eyewear/ui";
@@ -61,9 +63,14 @@ export function TryOnStudio() {
     setEditor(null);
   };
   const saveCalibration = async (frame: LoadedFrame) => {
+    const productId = new URLSearchParams(window.location.search).get('manageProduct');
+    if (productId) {
+      const base64 = await new Promise<string>((resolve,reject) => { const reader = new FileReader(); reader.onload = () => resolve(String(reader.result).split(',')[1]!); reader.onerror = () => reject(new Error('Could not read frame asset.')); reader.readAsDataURL(frame.blob); });
+      await commerceRequest(`/admin/products/${encodeURIComponent(productId)}/frame`, { method:'POST', body:jsonBody({ base64, mimeType:frame.blob.type, calibration:frame.calibration }) });
+    }
     await library.save(frame);
     draftUrls.current.delete(frame.source);
-    resetFit(); setEditor(null); setConfirmRemoval(false); setNotice(`${frame.name} calibration saved on this device.`);
+    resetFit(); setEditor(null); setConfirmRemoval(false); setNotice(`${frame.name} calibration saved.`);
   };
   const uploadFrame = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]; event.target.value = "";
@@ -94,10 +101,10 @@ export function TryOnStudio() {
   const onDrop = (event: DragEvent) => { event.preventDefault(); setDragging(false); acceptFiles(event.dataTransfer.files); };
 
   return <>
-    <a href="#studio" className="skip-link">Skip to fitting studio</a>
-    <header className="site-header"><a href="/" aria-label="Eye Club home" className="wordmark"><Eye size={27} strokeWidth={1.6} /><span>eye club<span className="wordmark-dot">.</span></span></a>
-      <nav aria-label="Main navigation" className="header-nav"><a href="#studio" aria-current="page">Try-on studio</a><a href="#how-it-works">How it works</a><a href="/eyeglasses">Shop Frames</a></nav>
-      <a href="#privacy" className="header-privacy"><ShieldCheck size={15} strokeWidth={1.5} /><span>Private by design</span></a>
+    <div className="flex justify-end px-4 lg:px-8 pt-4"><Link href="#studio" className="skip-link">Skip <ArrowRight size={15} strokeWidth={2.4} /></Link></div>
+    <header className="site-header"><Link href="/" aria-label="Eye Club home" className="wordmark"><Eye size={27} strokeWidth={1.6} /><span>eye club<span className="wordmark-dot">.</span></span></Link>
+      <nav aria-label="Main navigation" className="header-nav"><Link href="#studio" aria-current="page">Try-on studio</Link><Link href="#how-it-works">How it works</Link><Link href="/eyeglasses">Shop Frames</Link><Link href="/pos">POS</Link></nav>
+      <Link href="#privacy" className="header-privacy"><ShieldCheck size={15} strokeWidth={1.5} /><span>Private by design</span></Link>
     </header>
     <main id="studio" className="studio-shell">
       <div className="page-heading"><div><p className="eyebrow flex items-center gap-2"><span className="size-1.5 rounded-full bg-emerald-800" />Your personal fitting room</p>
@@ -116,7 +123,14 @@ export function TryOnStudio() {
         <Button aria-pressed={mode === "photo"} onClick={() => setMode("photo")}>Photo upload</Button>
       </div>
       <div className="studio-grid">
-        {mode === "live" && <LiveTryOn frame={library.selected} />}
+        {mode === "live" && (
+          <LiveTryOn
+            frame={library.selected}
+            adjustment={adjustment}
+            onAdjustmentChange={setAdjustment}
+            onResetFit={resetFit}
+          />
+        )}
         <section style={{ display: mode === "photo" ? undefined : "none" }} className="preview-panel" aria-label="Virtual try-on preview">
           <div className="preview-toolbar"><span className="flex items-center gap-2 text-xs font-medium"><span className={`size-1.5 rounded-full ${ready ? "bg-emerald-600" : "bg-stone-300"}`} />{ready ? "Your fitting preview" : "Your photo"}</span>
             <div className="flex items-center gap-1"><Button variant="ghost" size="sm" onClick={choosePhoto} disabled={busy || !library.selected || importing}><ImagePlus />{ready ? "Change photo" : "Add photo"}</Button>

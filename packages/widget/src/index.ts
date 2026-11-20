@@ -14,7 +14,7 @@ function openModal(button: WidgetButton) {
   const organization = button.dataset.organization;
   const params = new URLSearchParams({ product });
   if (organization) params.set("organization", organization);
-  if (publicKey) params.set("widget", publicKey);
+  if (publicKey) { params.set("widget", publicKey); params.set("parentOrigin",window.location.origin); }
   const backdrop = document.createElement("div"); backdrop.id = modalId; backdrop.setAttribute("role", "dialog"); backdrop.setAttribute("aria-modal", "true"); backdrop.setAttribute("aria-label", "Virtual try-on");
   Object.assign(backdrop.style, { position: "fixed", inset: "0", zIndex: "2147483647", display: "grid", placeItems: "center", padding: "16px", background: "rgb(20 35 19 / 0.62)" });
   const panel = document.createElement("div"); Object.assign(panel.style, { position: "relative", width: "min(100%, 980px)", height: "min(92vh, 760px)", background: "#fafaf7", borderRadius: "14px", overflow: "hidden", boxShadow: "0 24px 80px rgb(0 0 0 / 0.25)" });

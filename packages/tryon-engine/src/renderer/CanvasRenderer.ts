@@ -4,8 +4,9 @@ export class CanvasRenderer implements FrameRenderer {
   render(canvas: HTMLCanvasElement, scene: RenderScene): void {
     // Keep source resolution for a crisp responsive canvas. CSS handles layout;
     // geometry stays in photo pixels and never depends on viewport dimensions.
-    canvas.width = scene.photoSize.width;
-    canvas.height = scene.photoSize.height;
+    // Only resize backing buffer when dimensions change to avoid 60fps GPU reallocation.
+    if (canvas.width !== scene.photoSize.width) canvas.width = scene.photoSize.width;
+    if (canvas.height !== scene.photoSize.height) canvas.height = scene.photoSize.height;
     const context = canvas.getContext("2d");
     if (!context) throw new Error("Canvas is unavailable in this browser.");
     context.clearRect(0, 0, canvas.width, canvas.height);

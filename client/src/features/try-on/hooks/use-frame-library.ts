@@ -81,7 +81,7 @@ export function useFrameLibrary() {
       }
       if (!active) { loaded.forEach((frame) => URL.revokeObjectURL(frame.source)); return; }
       loaded.forEach((frame) => ownedUrls.add(frame.source));
-      const requestedFrame = new URLSearchParams(window.location.search).get("frame");
+      const requestedFrame = new URLSearchParams(window.location.search).get("frame") ?? new URLSearchParams(window.location.search).get("product");
       const requested = requestedFrame ? loaded.find((frame) => frame.id === requestedFrame) : undefined;
       setFrames(loaded); if (requested) setSelectedId(requested.id); setError(issues.join(" ")); setLoading(false);
     }
