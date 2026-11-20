@@ -6,5 +6,10 @@
 !.env.example
 **/coverage
 **/*.tsbuildinfo
-apps/web/public/models
-apps/web/public/vision
+client/public/models
+client/public/vision
+
+**/dist
+.data
+test-results
+playwright-report
