@@ -62,7 +62,12 @@ export class AdminService {
       include: {
         brand: true,
         category: true,
-        variants: { include: { inventory: true } }
+        variants: {
+          include: {
+            inventory: true,
+            images: { orderBy: { displayOrder: 'asc' } },
+          },
+        },
       },
       orderBy: { createdAt: 'desc' }
     });

@@ -715,6 +715,105 @@ async function handleSeededFallback(
     return Response.json(seededState.products);
   }
 
+  if (joined === '/admin/products' && method === 'POST') {
+    const id = `prod-${Date.now()}`;
+    const variantId = `var-${Date.now()}`;
+    const newProduct = {
+      id,
+      vendorId: 'vendor-1',
+      name: body.name || 'New Frame',
+      slug: body.slug || `frame-${Date.now()}`,
+      skuBase: body.sku || `SKU-${Date.now()}`,
+      basePrice: Number(body.basePrice ?? 0),
+      status: 'DRAFT',
+      frameShape: body.frameShape || 'Rectangle',
+      frameType: 'Full Rim',
+      material: 'Acetate',
+      category: { id: body.categoryId || 'cat-1', name: 'Eyeglasses', slug: 'eyeglasses' },
+      brand: { id: body.brandId || 'brand-1', name: 'Eye-Club Air' },
+      variants: [
+        {
+          id: variantId,
+          sku: body.sku || `SKU-${Date.now()}`,
+          color: body.color || 'Black',
+          size: body.size || 'Medium',
+          price: Number(body.basePrice ?? 0),
+          images: body.imageUrl ? [{ id: `img-${Date.now()}`, url: body.imageUrl, isPrimary: true }] : [],
+          inventory: [{ storeId: body.storeId || 'store-1', availableQuantity: Number(body.stock ?? 0) }],
+        },
+      ],
+    };
+    seededState.products.unshift(newProduct as (typeof seededState.products)[0]);
+    return Response.json(newProduct, { status: 201 });
+  }
+
+  if (path[0] === 'admin' && path[1] === 'products' && path[2] && path[3] === 'status' && method === 'PUT') {
+    const product = seededState.products.find((p) => p.id === path[2]);
+    if (product && body.status) product.status = body.status;
+    return Response.json(product ?? {});
+  }
+
+  if (path[0] === 'admin' && path[1] === 'inventory' && path[2] && method === 'PUT') {
+    for (const product of seededState.products) {
+      const variant = product.variants.find((v) => v.id === path[2]);
+      if (variant) {
+        const existing = variant.inventory.find((inv) => inv.storeId === body.storeId);
+        if (existing) existing.availableQuantity = Number(body.quantity ?? 0);
+        else variant.inventory.push({ storeId: body.storeId, availableQuantity: Number(body.quantity ?? 0) });
+        return Response.json(variant);
+      }
+    }
+    return Response.json({ ok: true });
+  }
+
+  if (path[0] === 'admin' && path[1] === 'products' && path[2] && path[3] === 'images' && !path[4] && method === 'POST') {
+    const product = seededState.products.find((p) => p.id === path[2]);
+    if (!product) return Response.json({ message: 'Product not found.' }, { status: 404 });
+    const variant =
+      (body.variantId ? product.variants.find((v) => v.id === body.variantId) : product.variants[0]) ??
+      product.variants[0];
+    if (!variant) return Response.json({ message: 'Variant not found.' }, { status: 400 });
+
+    const mimeType = body.mimeType || 'image/png';
+    const rawBase64 = String(body.base64 || '');
+    const dataUrl = rawBase64.startsWith('data:') ? rawBase64 : `data:${mimeType};base64,${rawBase64}`;
+    const newImage = {
+      id: `img-${Date.now()}`,
+      url: dataUrl,
+      altText: body.altText || `${product.name} - ${variant.color}`,
+      isPrimary: Boolean(body.isPrimary) || variant.images.length === 0,
+    };
+    if (newImage.isPrimary) {
+      variant.images.forEach((img) => {
+        (img as { isPrimary?: boolean }).isPrimary = false;
+      });
+    }
+    variant.images.push(newImage as (typeof variant.images)[0]);
+    return Response.json({ saved: true, image: newImage }, { status: 201 });
+  }
+
+  if (path[0] === 'admin' && path[1] === 'products' && path[2] && path[3] === 'images' && path[4] && method === 'DELETE') {
+    const product = seededState.products.find((p) => p.id === path[2]);
+    if (product) {
+      for (const variant of product.variants) {
+        variant.images = variant.images.filter((img) => (img as { id?: string }).id !== path[4]);
+      }
+    }
+    return Response.json({ deleted: true, id: path[4] });
+  }
+
+  if (path[0] === 'admin' && path[1] === 'products' && path[2] && path[3] === 'frame' && method === 'POST') {
+    const product = seededState.products.find((p) => p.id === path[2]);
+    if (product) {
+      (product as { frameAsset?: unknown; frameCalibration?: unknown }).frameAsset = {
+        storageKey: `${product.id}/frame.png`,
+        mimeType: body.mimeType || 'image/png',
+      };
+      (product as { frameCalibration?: unknown }).frameCalibration = body.calibration;
+    }
+    return Response.json({ saved: true }, { status: 201 });
+  }
+
   if (joined === '/admin/orders' && method === 'GET') {
     return Response.json(seededState.posOrders);
   }

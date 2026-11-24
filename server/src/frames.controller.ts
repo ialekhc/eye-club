@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Inject, Param, Post, Res, UseGuards, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Inject, Param, Post, Res, UseGuards, BadRequestException, NotFoundException } from '@nestjs/common';
 import { IsBase64, IsIn, IsObject, MaxLength } from 'class-validator';
 import { Prisma } from '@prisma/client';
 import sharp from 'sharp';
@@ -8,6 +8,7 @@ import { OBJECT_STORAGE, type ObjectStorage, type StoredObject } from './object-
 import { AccessTokenGuard } from './auth.guard.js';
 import { RolesGuard } from './roles.guard.js';
 import { Roles } from './roles.decorator.js';
+import { UploadProductImageDto } from './admin/catalog.dto.js';
 class FrameDto {
   @IsBase64() @MaxLength(14000000) base64!: string;
   @IsIn(['image/png','image/webp']) mimeType!: string;
@@ -17,6 +18,100 @@ const calibrationKeys = ['leftAnchorX','leftAnchorY','rightAnchorX','rightAnchor
 @Controller()
 export class FramesController {
   constructor(private readonly prisma: PrismaService, @Inject(OBJECT_STORAGE) private readonly storage: ObjectStorage) {}
+  @Post('admin/products/:id/images')
+  @UseGuards(AccessTokenGuard, RolesGuard)
+  @Roles('SUPER_ADMIN','ADMIN')
+  async uploadProductImage(@Param('id') productId: string, @Body() data: UploadProductImageDto) {
+    const product = await this.prisma.product.findUnique({
+      where: { id: productId },
+      include: { variants: { orderBy: { id: 'asc' } } },
+    });
+    if (!product) throw new NotFoundException('Product not found.');
+    const variant = data.variantId
+      ? product.variants.find((v) => v.id === data.variantId)
+      : product.variants[0];
+    if (!variant) throw new BadRequestException('Product has no variant to attach an image to.');
+
+    const cleanBase64 = data.base64.includes(',') ? data.base64.split(',')[1]! : data.base64;
+    const buffer = Buffer.from(cleanBase64, 'base64');
+    if (!buffer.length || buffer.length > 10 * 1024 * 1024) {
+      throw new BadRequestException('Image must be non-empty and 10 MiB or smaller.');
+    }
+
+    let normalized: Buffer;
+    try {
+      normalized = await sharp(buffer, { limitInputPixels: 16_000_000 })
+        .rotate()
+        .resize({ width: 1600, height: 1200, fit: 'inside', withoutEnlargement: true })
+        .ensureAlpha()
+        .png()
+        .toBuffer();
+    } catch {
+      throw new BadRequestException('Invalid image file. Upload a valid JPG, PNG, or WebP.');
+    }
+
+    const asset = await this.storage.putFrame(product.vendorId ?? 'platform', {
+      buffer: normalized,
+      size: normalized.length,
+      mimetype: 'image/png',
+    });
+
+    const encodedKey = Buffer.from(asset.storageKey, 'utf8').toString('base64url');
+    const url = `/api/backend/catalog/images/${encodedKey}`;
+
+    if (data.isPrimary) {
+      await this.prisma.productImage.updateMany({
+        where: { productVariantId: variant.id },
+        data: { isPrimary: false },
+      });
+    }
+
+    const existingCount = await this.prisma.productImage.count({
+      where: { productVariantId: variant.id },
+    });
+
+    const image = await this.prisma.productImage.create({
+      data: {
+        productVariantId: variant.id,
+        url,
+        altText: data.altText?.trim() || `${product.name} - ${variant.color}`,
+        isPrimary: data.isPrimary ?? existingCount === 0,
+        displayOrder: existingCount + 1,
+      },
+    });
+
+    return { saved: true, image, asset };
+  }
+
+  @Delete('admin/products/:id/images/:imageId')
+  @UseGuards(AccessTokenGuard, RolesGuard)
+  @Roles('SUPER_ADMIN','ADMIN')
+  async deleteProductImage(@Param('id') productId: string, @Param('imageId') imageId: string) {
+    const image = await this.prisma.productImage.findFirst({
+      where: { id: imageId, variant: { productId } },
+    });
+    if (!image) throw new NotFoundException('Product image not found.');
+    await this.prisma.productImage.delete({ where: { id: imageId } });
+    return { deleted: true, id: imageId };
+  }
+
+  @Get('catalog/images/:encodedKey')
+  async getProductImage(@Param('encodedKey') encodedKey: string, @Res() response: Response) {
+    let storageKey: string;
+    try {
+      storageKey = Buffer.from(encodedKey, 'base64url').toString('utf8');
+    } catch {
+      throw new BadRequestException('Invalid image key.');
+    }
+    if (!storageKey || storageKey.includes('..') || storageKey.startsWith('/')) {
+      throw new BadRequestException('Invalid image key.');
+    }
+    const result = await this.storage.getFrame(storageKey);
+    response.setHeader('Content-Type', result.mimeType);
+    response.setHeader('Cache-Control', 'public, max-age=86400');
+    response.send(result.body);
+  }
+
   @Post('admin/products/:id/frame')
   @UseGuards(AccessTokenGuard, RolesGuard)
   @Roles('SUPER_ADMIN','ADMIN')

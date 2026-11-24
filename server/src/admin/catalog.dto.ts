@@ -1,4 +1,4 @@
-import { IsBoolean, IsInt, IsNotEmpty, IsNumber, IsOptional, IsString, Matches, Max, Min, IsUrl } from 'class-validator';
+import { IsBoolean, IsIn, IsInt, IsNotEmpty, IsNumber, IsOptional, IsString, Matches, Max, MaxLength, Min } from 'class-validator';
 export class CreateProductDto {
   @IsString() @IsNotEmpty() name!: string;
   @IsString() @Matches(/^[a-z0-9]+(?:-[a-z0-9]+)*$/) slug!: string;
@@ -13,9 +13,16 @@ export class CreateProductDto {
   @IsOptional() @IsString() description?: string;
   @IsOptional() @IsString() frameShape?: string;
   @IsOptional() @IsBoolean() prescriptionCompatible?: boolean;
-  @IsOptional() @IsUrl({ protocols: ['https'], require_protocol: true }) @Matches(/^https:\/\/images\.unsplash\.com\//) imageUrl?: string;
+  @IsOptional() @IsString() @Matches(/^(https:\/\/.+|\/(frames|api)\/.+)$/) imageUrl?: string;
 }
 export class InventoryDto {
   @IsString() @IsNotEmpty() storeId!: string;
   @IsInt() @Min(0) @Max(1000000) quantity!: number;
+}
+export class UploadProductImageDto {
+  @IsString() @IsNotEmpty() @MaxLength(14000000) base64!: string;
+  @IsIn(['image/jpeg', 'image/png', 'image/webp']) mimeType!: string;
+  @IsOptional() @IsString() variantId?: string;
+  @IsOptional() @IsString() @MaxLength(200) altText?: string;
+  @IsOptional() @IsBoolean() isPrimary?: boolean;
 }
