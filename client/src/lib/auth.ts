@@ -149,5 +149,11 @@ export const authOptions: NextAuthOptions = {
   pages: {
     signIn: "/login",
   },
-  secret: process.env.NEXTAUTH_SECRET || "development-secret-change-me"
+  secret:
+    process.env.NEXTAUTH_SECRET ||
+    (process.env.NODE_ENV === "production" && process.env.NEXT_PHASE !== "phase-production-build"
+      ? (() => {
+          throw new Error("NEXTAUTH_SECRET must be set in production.");
+        })()
+      : "development-secret-change-me")
 };
