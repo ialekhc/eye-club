@@ -1,54 +1,55 @@
 import Link from 'next/link';
 import { ArrowRight, Camera, Eye, Glasses, MapPin, ShoppingBag, Sparkles } from 'lucide-react';
+import { Badge, Card, CardContent } from '@eyewear/ui';
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-slate-50/70">
-      {/* Clean, Simple Hero */}
-      <section className="bg-white border-b border-slate-200">
-        <div className="container mx-auto px-4 lg:px-8 py-14 lg:py-20 max-w-5xl text-center space-y-6">
-          <span className="inline-flex items-center gap-2 rounded-full bg-teal-50 border border-teal-200 px-3.5 py-1 text-xs font-semibold text-teal-800">
+    <div className="min-h-screen bg-[#F9FAFB]">
+      {/* Clean Untitled UI Hero */}
+      <section className="border-b border-[#EAECF0] bg-white">
+        <div className="container mx-auto max-w-5xl px-4 py-16 text-center lg:px-8 lg:py-24 space-y-6">
+          <Badge variant="default" className="px-3 py-1">
             <Sparkles className="w-3.5 h-3.5" /> Simple Virtual Try-On &amp; Optical Store
-          </span>
+          </Badge>
 
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 leading-tight">
+          <h1 className="text-4xl font-bold tracking-tight text-[#101828] sm:text-5xl lg:text-6xl leading-[1.12]">
             Find glasses that{' '}
             <span className="text-teal-700">fit your face.</span>
           </h1>
 
-          <p className="text-base sm:text-lg text-slate-600 max-w-2xl mx-auto">
+          <p className="mx-auto max-w-2xl text-base text-[#475467] sm:text-lg leading-relaxed">
             Browse our frames, try them on live using your camera or a photo, and order online or pick them up at your nearest optical centre.
           </p>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
             <Link
               href="/try-on"
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 rounded-2xl bg-teal-700 hover:bg-teal-800 px-8 py-4 text-base font-bold text-white shadow-sm transition-colors"
+              className="w-full sm:w-auto inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-teal-700 px-7 text-sm font-semibold text-white shadow-xs hover:bg-teal-800 transition-colors"
             >
-              <Camera className="w-5 h-5" />
+              <Camera className="w-4 h-4" />
               Try Frames on Camera
             </Link>
 
             <Link
               href="/eyeglasses"
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-300 bg-white hover:bg-slate-50 px-8 py-4 text-base font-bold text-slate-900 transition-colors"
+              className="w-full sm:w-auto inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-[#D0D5DD] bg-white px-7 text-sm font-semibold text-[#344054] shadow-xs hover:bg-[#F9FAFB] transition-colors"
             >
               Browse Eyeglasses
               <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
 
-          <p className="text-xs text-slate-500 pt-2">
+          <p className="text-xs text-[#667085] pt-2">
             Optical store staff?{' '}
-            <Link href="/login" className="font-semibold text-teal-700 underline">
+            <Link href="/login" className="font-semibold text-teal-700 hover:underline">
               Sign in here
             </Link>{' '}
             to open{' '}
-            <Link href="/workstation" className="font-semibold text-slate-700 underline">
+            <Link href="/workstation" className="font-semibold text-[#344054] hover:underline">
               Workstation
             </Link>{' '}
             or{' '}
-            <Link href="/pos" className="font-semibold text-slate-700 underline">
+            <Link href="/pos" className="font-semibold text-[#344054] hover:underline">
               POS
             </Link>
             .
@@ -57,16 +58,16 @@ export default function HomePage() {
       </section>
 
       {/* How It Works — 3 Easy Steps */}
-      <section className="container mx-auto px-4 lg:px-8 py-14 max-w-5xl">
+      <section className="container mx-auto max-w-5xl px-4 py-14 lg:px-8">
         <div className="text-center mb-10">
-          <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">How it works</h2>
-          <p className="text-sm text-slate-600 mt-1">Three simple steps to get your next pair.</p>
+          <h2 className="text-2xl font-bold tracking-tight text-[#101828] sm:text-3xl">How it works</h2>
+          <p className="mt-1.5 text-sm text-[#475467]">Three simple steps to get your next pair.</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
           {[
             {
-              step: '1',
+              step: 'Step 1',
               title: 'Pick a frame',
               desc: 'Choose from eyeglasses or sunglasses by shape, color, and price.',
               icon: Glasses,
@@ -74,7 +75,7 @@ export default function HomePage() {
               action: 'See frames',
             },
             {
-              step: '2',
+              step: 'Step 2',
               title: 'Try it on',
               desc: 'Turn on your camera or upload a selfie to see how the frame sits on your face.',
               icon: Camera,
@@ -82,7 +83,7 @@ export default function HomePage() {
               action: 'Open try-on',
             },
             {
-              step: '3',
+              step: 'Step 3',
               title: 'Order or visit store',
               desc: 'Add your prescription lenses and check out online or visit a nearby store.',
               icon: ShoppingBag,
@@ -92,24 +93,24 @@ export default function HomePage() {
           ].map((item) => {
             const Icon = item.icon;
             return (
-              <Link
-                key={item.step}
-                href={item.href}
-                className="group rounded-2xl border border-slate-200 bg-white p-6 shadow-xs hover:border-teal-300 hover:shadow-md transition-all flex flex-col justify-between"
-              >
-                <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="w-11 h-11 rounded-xl bg-teal-50 text-teal-700 flex items-center justify-center">
-                      <Icon className="w-5 h-5" />
+              <Link key={item.step} href={item.href} className="group block">
+                <Card className="h-full transition-all group-hover:border-teal-300 group-hover:shadow-sm">
+                  <CardContent className="p-6 flex h-full flex-col justify-between">
+                    <div>
+                      <div className="mb-4 flex items-center justify-between">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-[#EAECF0] bg-[#F9FAFB] text-teal-700">
+                          <Icon className="w-5 h-5" />
+                        </div>
+                        <Badge variant="secondary">{item.step}</Badge>
+                      </div>
+                      <h3 className="text-base font-semibold text-[#101828] mb-1.5">{item.title}</h3>
+                      <p className="text-sm text-[#475467] leading-relaxed">{item.desc}</p>
                     </div>
-                    <span className="text-xs font-bold text-slate-400">STEP {item.step}</span>
-                  </div>
-                  <h3 className="text-lg font-bold text-slate-900 mb-1.5">{item.title}</h3>
-                  <p className="text-sm text-slate-600 leading-relaxed">{item.desc}</p>
-                </div>
-                <span className="mt-5 inline-flex items-center gap-1 text-xs font-bold text-teal-700 group-hover:gap-2 transition-all">
-                  {item.action} <ArrowRight className="w-3.5 h-3.5" />
-                </span>
+                    <span className="mt-5 inline-flex items-center gap-1.5 text-xs font-semibold text-teal-700 group-hover:gap-2 transition-all">
+                      {item.action} <ArrowRight className="w-3.5 h-3.5" />
+                    </span>
+                  </CardContent>
+                </Card>
               </Link>
             );
           })}
@@ -117,8 +118,8 @@ export default function HomePage() {
       </section>
 
       {/* Quick Shortcuts */}
-      <section className="container mx-auto px-4 lg:px-8 pb-16 max-w-5xl">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <section className="container mx-auto max-w-5xl px-4 pb-16 lg:px-8">
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
           {[
             { title: 'Eyeglasses', sub: 'Daily & prescription', href: '/eyeglasses', icon: Glasses },
             { title: 'Sunglasses', sub: 'UV400 & polarized', href: '/sunglasses', icon: Sparkles },
@@ -127,14 +128,14 @@ export default function HomePage() {
           ].map((card) => {
             const Icon = card.icon;
             return (
-              <Link
-                key={card.title}
-                href={card.href}
-                className="rounded-2xl border border-slate-200 bg-white p-5 hover:border-slate-300 hover:bg-slate-50 transition-colors"
-              >
-                <Icon className="w-5 h-5 text-teal-700 mb-3" />
-                <h3 className="font-bold text-slate-900 text-sm">{card.title}</h3>
-                <p className="text-xs text-slate-500 mt-0.5">{card.sub}</p>
+              <Link key={card.title} href={card.href} className="block group">
+                <Card className="transition-colors group-hover:border-[#D0D5DD] group-hover:bg-[#F9FAFB]">
+                  <CardContent className="p-5">
+                    <Icon className="w-5 h-5 text-teal-700 mb-3" />
+                    <h3 className="font-semibold text-[#101828] text-sm">{card.title}</h3>
+                    <p className="text-xs text-[#667085] mt-0.5">{card.sub}</p>
+                  </CardContent>
+                </Card>
               </Link>
             );
           })}

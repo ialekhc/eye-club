@@ -1,4 +1,5 @@
 'use client';
+
 import { signOut } from 'next-auth/react';
 import Link from 'next/link';
 import {
@@ -12,6 +13,7 @@ import {
   MonitorSmartphone,
   Network,
 } from 'lucide-react';
+import { Badge } from '@eyewear/ui';
 
 export function AdminSidebar({ currentPath }: { currentPath: string }) {
   const links = [
@@ -27,33 +29,46 @@ export function AdminSidebar({ currentPath }: { currentPath: string }) {
   ];
 
   return (
-    <aside className="w-full lg:w-64 shrink-0 h-[calc(100vh-80px)] sticky top-20 bg-slate-900 text-slate-300 flex flex-col p-4">
-      <div className="mb-8 p-4 bg-slate-800 rounded-xl">
-        <h2 className="text-white font-bold text-lg mb-1">Admin Portal</h2>
-        <p className="text-xs text-slate-400">Eye-Club Operations</p>
+    <aside className="w-full lg:w-64 shrink-0 lg:min-h-[calc(100vh-64px)] border-r border-[#EAECF0] bg-white flex flex-col p-4">
+      <div className="mb-6 rounded-xl border border-[#EAECF0] bg-[#F9FAFB] p-3.5">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-[#101828]">Admin Workspace</h2>
+          <Badge variant="default">SaaS</Badge>
+        </div>
+        <p className="mt-0.5 text-xs text-[#667085]">Eye-Club Operations</p>
       </div>
 
-      <nav className="flex flex-col gap-2 flex-1">
+      <nav className="flex flex-col gap-1 flex-1" aria-label="Admin sidebar">
         {links.map((link) => {
           const Icon = link.icon;
           const isActive = currentPath === link.href;
           return (
-            <Link 
-              key={link.name} 
+            <Link
+              key={link.name}
               href={link.href}
-              className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${isActive ? 'bg-indigo-500 text-white font-medium shadow-md' : 'hover:bg-slate-800 hover:text-white'}`}
+              className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+                isActive
+                  ? 'bg-teal-50 text-teal-800 font-semibold'
+                  : 'text-[#344054] hover:bg-[#F9FAFB] hover:text-[#101828]'
+              }`}
             >
-              <Icon className="w-5 h-5" />
+              <Icon className={`w-4 h-4 ${isActive ? 'text-teal-700' : 'text-[#667085]'}`} />
               {link.name}
             </Link>
           );
         })}
       </nav>
-      
-      <button onClick={() => signOut({ callbackUrl: "/" })} className="flex items-center gap-3 px-4 py-3 mt-4 text-red-400 hover:bg-slate-800 rounded-lg transition-colors text-left w-full">
-        <LogOut className="w-5 h-5" />
-        Exit Admin
-      </button>
+
+      <div className="pt-4 mt-4 border-t border-[#EAECF0]">
+        <button
+          type="button"
+          onClick={() => signOut({ callbackUrl: '/' })}
+          className="flex items-center gap-3 w-full rounded-lg px-3 py-2.5 text-sm font-medium text-rose-600 hover:bg-rose-50 transition-colors text-left"
+        >
+          <LogOut className="w-4 h-4" />
+          Sign Out
+        </button>
+      </div>
     </aside>
   );
 }
