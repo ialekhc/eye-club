@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { ChangeEvent, FormEvent, useState } from 'react';
 import { CheckCircle2, ImagePlus, Plus, Search, SlidersHorizontal, Trash2, Upload } from 'lucide-react';
+import { Alert, Badge, Button, Card, CardContent, Input, Label, Select } from '@eyewear/ui';
 import { useResource } from '@/lib/use-resource';
 import { commerceRequest, jsonBody, money, Store } from '@/lib/commerce-api';
 import { RemoteError } from '@/components/RemoteState';
@@ -222,29 +223,25 @@ export default function AdminCatalogPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">Catalogue, Frame Images &amp; Inventory</h1>
-          <p className="text-sm text-slate-500 mt-1">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#101828]">Catalogue, Frame Images &amp; Inventory</h1>
+          <p className="text-sm text-[#475467] mt-1">
             Add frames, upload product photos (JPG/PNG/WebP), attach transparent try-on overlays, and set store stock.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => setShow((v) => !v)}
-          className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-xs hover:opacity-95"
-        >
+        <Button onClick={() => setShow((v) => !v)} variant={show ? 'outline' : 'default'}>
           <Plus className="w-4 h-4" />
           {show ? 'Cancel' : 'Add Frame Product'}
-        </button>
+        </Button>
       </div>
 
       <div className="relative max-w-md">
-        <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-        <input
+        <Search className="w-4 h-4 text-[#667085] absolute left-3.5 top-1/2 -translate-y-1/2" />
+        <Input
           aria-label="Search products"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search frame name or SKU..."
-          className="w-full rounded-xl border border-slate-200 bg-white pl-10 pr-4 py-2.5 text-sm"
+          className="pl-10"
         />
       </div>
 
@@ -253,140 +250,127 @@ export default function AdminCatalogPage() {
       ) : null}
 
       {notice && (
-        <div
-          role="status"
-          className="flex items-center justify-between rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-900"
-        >
-          <span className="flex items-center gap-2">
+        <Alert variant="success" className="items-center justify-between">
+          <span className="flex items-center gap-2 font-medium">
             <CheckCircle2 className="w-4 h-4 text-emerald-600" />
             {notice}
           </span>
-          <button type="button" onClick={() => setNotice('')} className="text-xs font-bold text-emerald-700">
+          <button type="button" onClick={() => setNotice('')} className="text-xs font-bold text-emerald-800">
             Dismiss
           </button>
-        </div>
+        </Alert>
       )}
 
       {show ? (
-        <form onSubmit={create} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs space-y-5">
-          <h2 className="text-lg font-bold text-slate-900">New Frame Product</h2>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {[
-              ['name', 'Product name'],
-              ['slug', 'URL slug (lowercase-with-hyphens)'],
-              ['sku', 'SKU'],
-              ['color', 'Color'],
-              ['size', 'Size (e.g. Medium 52-18-145)'],
-              ['basePrice', 'Price (NPR)'],
-              ['stock', 'Opening stock'],
-              ['frameShape', 'Frame shape (e.g. Rectangle, Round)'],
-              ['description', 'Description'],
-            ].map(([name, label]) => (
-              <label key={name} className="block text-xs font-semibold text-slate-700">
-                {label}
-                <input
-                  name={name}
-                  required={!['description', 'frameShape'].includes(name!)}
-                  type={['stock', 'basePrice'].includes(name!) ? 'number' : 'text'}
-                  min="0"
-                  step={name === 'basePrice' ? '0.01' : '1'}
-                  className="mt-1 block w-full rounded-xl border border-slate-300 px-3 py-2 text-sm font-normal"
-                />
-              </label>
-            ))}
-
-            <label className="block text-xs font-semibold text-slate-700">
-              Store
-              <select
-                required
-                name="storeId"
-                className="mt-1 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-normal"
-              >
-                {stores.data?.map((store) => (
-                  <option key={store.id} value={store.id}>
-                    {store.name}
-                  </option>
+        <Card>
+          <CardContent className="p-6">
+            <form onSubmit={create} className="space-y-5">
+              <h2 className="text-lg font-semibold text-[#101828]">New Frame Product</h2>
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {[
+                  ['name', 'Product name'],
+                  ['slug', 'URL slug (lowercase-with-hyphens)'],
+                  ['sku', 'SKU'],
+                  ['color', 'Color'],
+                  ['size', 'Size (e.g. Medium 52-18-145)'],
+                  ['basePrice', 'Price (NPR)'],
+                  ['stock', 'Opening stock'],
+                  ['frameShape', 'Frame shape (e.g. Rectangle, Round)'],
+                  ['description', 'Description'],
+                ].map(([name, label]) => (
+                  <div key={name} className="space-y-1.5">
+                    <Label>{label}</Label>
+                    <Input
+                      name={name}
+                      required={!['description', 'frameShape'].includes(name!)}
+                      type={['stock', 'basePrice'].includes(name!) ? 'number' : 'text'}
+                      min="0"
+                      step={name === 'basePrice' ? '0.01' : '1'}
+                    />
+                  </div>
                 ))}
-              </select>
-            </label>
 
-            <label className="block text-xs font-semibold text-slate-700">
-              Category
-              <select
-                name="categoryId"
-                className="mt-1 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-normal"
-              >
-                <option value="">Uncategorized</option>
-                {categories.data?.map((row) => (
-                  <option key={row.id} value={row.id}>
-                    {row.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label className="block text-xs font-semibold text-slate-700">
-              Brand
-              <select
-                name="brandId"
-                className="mt-1 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-normal"
-              >
-                <option value="">Unbranded</option>
-                {brands.data?.map((row) => (
-                  <option key={row.id} value={row.id}>
-                    {row.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
-
-          {/* Frame Image Upload on Creation */}
-          <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              {draftImage ? (
-                <Image
-                  src={draftImage.previewUrl}
-                  alt="Frame preview"
-                  width={120}
-                  height={54}
-                  unoptimized
-                  className="h-14 w-28 rounded-lg border bg-white object-contain p-1"
-                />
-              ) : (
-                <div className="h-14 w-28 rounded-lg border border-slate-200 bg-white flex items-center justify-center text-slate-400">
-                  <ImagePlus className="w-6 h-6" />
+                <div className="space-y-1.5">
+                  <Label>Store</Label>
+                  <Select required name="storeId">
+                    {stores.data?.map((store) => (
+                      <option key={store.id} value={store.id}>
+                        {store.name}
+                      </option>
+                    ))}
+                  </Select>
                 </div>
-              )}
-              <div>
-                <p className="text-sm font-semibold text-slate-900">
-                  {draftImage ? draftImage.fileName : 'Primary Frame Photo (Optional)'}
-                </p>
-                <p className="text-xs text-slate-500">
-                  JPG, PNG, or WebP up to 10 MB. Displayed across Catalog, POS, and Storefront.
-                </p>
+
+                <div className="space-y-1.5">
+                  <Label>Category</Label>
+                  <Select name="categoryId">
+                    <option value="">Uncategorized</option>
+                    {categories.data?.map((row) => (
+                      <option key={row.id} value={row.id}>
+                        {row.name}
+                      </option>
+                    ))}
+                  </Select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label>Brand</Label>
+                  <Select name="brandId">
+                    <option value="">Unbranded</option>
+                    {brands.data?.map((row) => (
+                      <option key={row.id} value={row.id}>
+                        {row.name}
+                      </option>
+                    ))}
+                  </Select>
+                </div>
               </div>
-            </div>
 
-            <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-800 hover:bg-slate-100">
-              <Upload className="w-4 h-4 text-indigo-600" />
-              {draftImage ? 'Change Photo' : 'Choose Frame Image'}
-              <input
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                className="sr-only"
-                onChange={(e) => void onDraftImageSelect(e)}
-              />
-            </label>
-          </div>
+              {/* Frame Image Upload on Creation */}
+              <div className="rounded-xl border border-dashed border-[#D0D5DD] bg-[#F9FAFB] p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  {draftImage ? (
+                    <Image
+                      src={draftImage.previewUrl}
+                      alt="Frame preview"
+                      width={120}
+                      height={54}
+                      unoptimized
+                      className="h-14 w-28 rounded-lg border border-[#EAECF0] bg-white object-contain p-1"
+                    />
+                  ) : (
+                    <div className="h-14 w-28 rounded-lg border border-[#EAECF0] bg-white flex items-center justify-center text-[#667085]">
+                      <ImagePlus className="w-6 h-6" />
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-sm font-semibold text-[#101828]">
+                      {draftImage ? draftImage.fileName : 'Primary Frame Photo (Optional)'}
+                    </p>
+                    <p className="text-xs text-[#667085]">
+                      JPG, PNG, or WebP up to 10 MB. Displayed across Catalog, POS, and Storefront.
+                    </p>
+                  </div>
+                </div>
 
-          <button
-            disabled={busy}
-            className="rounded-xl bg-primary px-6 py-3 text-sm font-bold text-white hover:opacity-95 disabled:opacity-50"
-          >
-            {busy ? 'Saving...' : 'Save Frame Product'}
-          </button>
-        </form>
+                <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-[#D0D5DD] bg-white px-4 py-2 text-xs font-semibold text-[#344054] shadow-xs hover:bg-[#F9FAFB]">
+                  <Upload className="w-4 h-4 text-teal-700" />
+                  {draftImage ? 'Change Photo' : 'Choose Frame Image'}
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    className="sr-only"
+                    onChange={(e) => void onDraftImageSelect(e)}
+                  />
+                </label>
+              </div>
+
+              <Button type="submit" disabled={busy}>
+                {busy ? 'Saving...' : 'Save Frame Product'}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
       ) : null}
 
       {products.loading ? <p className="text-sm text-slate-500">Loading products…</p> : null}
@@ -403,11 +387,9 @@ export default function AdminCatalogPage() {
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
                   <div className="flex flex-wrap items-center gap-2.5">
-                    <h2 className="text-xl font-bold text-slate-900">{product.name}</h2>
+                    <h2 className="text-xl font-bold text-[#101828]">{product.name}</h2>
                     {product.frameAsset ? (
-                      <span className="rounded-full bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">
-                        Try-On Calibrated
-                      </span>
+                      <Badge variant="success">Try-On Calibrated</Badge>
                     ) : null}
                   </div>
                   <p className="text-sm font-semibold text-slate-700 mt-0.5">{money(product.basePrice)}</p>
