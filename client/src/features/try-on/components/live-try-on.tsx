@@ -283,7 +283,7 @@ export function LiveTryOn({
       <div className="preview-toolbar">
         <div className="flex items-center gap-2">
           <span
-            className={`size-2 rounded-full ${
+            className={`size-2.5 rounded-full ${
               running && trackingLocked
                 ? "bg-emerald-500 animate-pulse"
                 : running
@@ -291,11 +291,10 @@ export function LiveTryOn({
                   : "bg-stone-300"
             }`}
           />
-          <strong>Live fitting mirror</strong>
-          {running && (
-            <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-emerald-950/10 text-emerald-900">
-              {trackingLocked ? "1-Euro Stabilized" : "Searching face"}
-              {fps > 0 ? ` · ${fps} FPS` : ""}
+          <strong>Live Mirror</strong>
+          {running && trackingLocked && (
+            <span className="text-xs font-medium px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
+              Face Detected
             </span>
           )}
         </div>
@@ -306,7 +305,7 @@ export function LiveTryOn({
               size="sm"
               onClick={() => setFrozen((prev) => !prev)}
             >
-              {frozen ? "Resume video" : "Freeze pose"}
+              {frozen ? "Unfreeze" : "Pause Pose"}
             </Button>
           )}
           <Button
@@ -319,7 +318,7 @@ export function LiveTryOn({
               setRunning(!running);
             }}
           >
-            {running ? "Stop camera" : "Start camera"}
+            {running ? "Turn Off Camera" : "Turn On Camera"}
           </Button>
         </div>
       </div>
@@ -333,22 +332,30 @@ export function LiveTryOn({
         />
         {!running && (
           <div className="upload-empty">
-            <h2>Try it on. Move with it.</h2>
-            <p>Start the camera, then explore the frames below with stabilized tracking.</p>
+            <h2>See how frames look on you</h2>
+            <p className="mt-1 text-sm text-stone-500">
+              Click <strong>Turn On Camera</strong> above, then pick any frame below.
+            </p>
           </div>
         )}
       </div>
       <div className="preview-footer">
         <span>{status}</span>
         {running && (
-          <label className="debug-switch">
-            <input
-              type="checkbox"
-              checked={showLandmarks}
-              onChange={() => setShowLandmarks((v) => !v)}
-            />
-            <span>Show landmarks</span>
-          </label>
+          <details className="text-xs">
+            <summary className="cursor-pointer font-medium text-stone-600">Advanced</summary>
+            <div className="mt-2 flex items-center gap-4">
+              <label className="debug-switch">
+                <input
+                  type="checkbox"
+                  checked={showLandmarks}
+                  onChange={() => setShowLandmarks((v) => !v)}
+                />
+                <span>Show tracking points</span>
+              </label>
+              {fps > 0 && <span className="font-mono text-stone-500">{fps} FPS</span>}
+            </div>
+          </details>
         )}
       </div>
       {running && trackingLocked && onAdjustmentChange && onResetFit && (
@@ -358,15 +365,8 @@ export function LiveTryOn({
           onReset={onResetFit}
         />
       )}
-      {running && (
-        <p className="preview-footer">
-          If camera permission does not appear, open this page in Chrome or Safari. You can
-          also stop the camera and choose Photo upload.
-        </p>
-      )}
       <p className="preview-footer">
-        Video stays on this device. Temporal smoothing locks the frame steady when you pause
-        and tracks smoothly when you turn.
+        Your video stays private on this device and is never saved or uploaded.
       </p>
     </section>
   );

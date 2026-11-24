@@ -107,20 +107,18 @@ export function TryOnStudio() {
       <Link href="#privacy" className="header-privacy"><ShieldCheck size={15} strokeWidth={1.5} /><span>Private by design</span></Link>
     </header>
     <main id="studio" className="studio-shell">
-      <div className="page-heading"><div><p className="eyebrow flex items-center gap-2"><span className="size-1.5 rounded-full bg-emerald-800" />Your personal fitting room</p>
-        <h1>Your next frame, <span>on you.</span></h1><p className="page-description">A little less guessing. A whole new way to find your look.</p></div>
-        <span className="phase-label">LIVE + PHOTO TRY-ON <span>01</span></span></div>
-      <ol className="steps" aria-label="Try-on progress">{(mode === "live" ? ["Start your camera", "Choose a frame", "Move and explore"] : ["Add your photo", "Find your fit", "See your look"]).map((label, index) => {
-        const done = ready || (busy && index === 0);
-        const current = ready ? index === 2 : busy ? index === 1 : index === 0;
-        return <li key={label} className={current || done ? "step active" : "step"} aria-current={current ? "step" : undefined}>
-          <span className="step-number">{done && index < 2 ? <Check size={12} /> : `0${index + 1}`}</span>{label}{index < 2 && <span className="step-line" />}</li>;
-      })}</ol>
+      <div className="page-heading">
+        <div>
+          <p className="eyebrow flex items-center gap-2"><span className="size-1.5 rounded-full bg-emerald-800" />Virtual Fitting Room</p>
+          <h1>Try frames on <span>your face.</span></h1>
+          <p className="page-description">Turn on your camera or upload a photo, then tap any frame below to see how it looks.</p>
+        </div>
+      </div>
 
       <input ref={inputRef} type="file" accept="image/jpeg,image/png,image/webp" capture="user" onChange={onChange} className="sr-only" tabIndex={-1} aria-label="Take or choose your face photo" disabled={busy || !library.selected || importing} />
-      <div className="collection-actions" role="group" aria-label="Try-on mode">
-        <Button aria-pressed={mode === "live"} onClick={() => { reset(); setMode("live"); }}>Live camera</Button>
-        <Button aria-pressed={mode === "photo"} onClick={() => setMode("photo")}>Photo upload</Button>
+      <div className="collection-actions mb-6" role="group" aria-label="Try-on mode">
+        <Button variant={mode === "live" ? "default" : "outline"} aria-pressed={mode === "live"} onClick={() => { reset(); setMode("live"); }}>Live Camera</Button>
+        <Button variant={mode === "photo" ? "default" : "outline"} aria-pressed={mode === "photo"} onClick={() => setMode("photo")}>Upload a Photo</Button>
       </div>
       <div className="studio-grid">
         {mode === "live" && (
@@ -156,9 +154,18 @@ export function TryOnStudio() {
         {library.selected ? <FrameDetails ready={ready} frame={library.selected} count={library.frames.length} favorite={favorites.has(library.selected.id)} onFavorite={() => { const selectedId = library.selected!.id; setFavorites((current) => { const next = new Set(current); if (next.has(selectedId)) next.delete(selectedId); else next.add(selectedId); return next; }); if (publicSession) void trackTryOnEvent(publicSession, "FRAME_FAVORITED", selectedId).catch(() => undefined); }} onShare={() => { if (publicSession) void trackTryOnEvent(publicSession, "RESULT_SHARED", library.selected!.id).catch(() => undefined); void shareFrame(); }} productUrl={library.selected.productUrl} onProductClick={() => { if (publicSession) void trackTryOnEvent(publicSession, "PRODUCT_CLICKED", library.selected!.id).catch(() => undefined); }} /> : <aside className="frame-details"><p role="status">{library.loading ? "Loading your frames…" : "No frames available. Add a transparent frame below."}</p></aside>}
       </div>
 
-      <section className="collection" aria-labelledby="collection-title"><div className="collection-heading"><h2 id="collection-title">The fitting collection <span>{String(library.frames.length).padStart(2, "0")}</span></h2>
-        <div className="collection-actions"><Button variant="outline" size="sm" disabled={busy || importing || !library.selected} onClick={() => { if (library.selected) setEditor({ frame: library.selected, isNew: false }); }}><SlidersHorizontal />Calibrate frame</Button><Button variant="outline" size="sm" disabled={busy || importing} onClick={() => { setCompareMode((value) => !value); setCompareIds([]); }}>{compareMode ? "Close compare" : "Compare"}</Button>
-          <Button size="sm" disabled={busy || importing || library.loading} onClick={() => frameInputRef.current?.click()}><Plus />{importing ? "Reading asset…" : "Add frame"}</Button></div></div>
+      <section className="collection" aria-labelledby="collection-title">
+        <div className="collection-heading">
+          <h2 id="collection-title">Choose a frame to try <span>{String(library.frames.length).padStart(2, "0")}</span></h2>
+          <details className="text-xs">
+            <summary className="cursor-pointer font-semibold text-stone-600 px-3 py-1.5 rounded-lg border border-stone-200 bg-white">More frame tools</summary>
+            <div className="collection-actions mt-3">
+              <Button variant="outline" size="sm" disabled={busy || importing || !library.selected} onClick={() => { if (library.selected) setEditor({ frame: library.selected, isNew: false }); }}><SlidersHorizontal />Adjust anchor calibration</Button>
+              <Button variant="outline" size="sm" disabled={busy || importing} onClick={() => { setCompareMode((value) => !value); setCompareIds([]); }}>{compareMode ? "Close compare" : "Compare two frames"}</Button>
+              <Button size="sm" disabled={busy || importing || library.loading} onClick={() => frameInputRef.current?.click()}><Plus />{importing ? "Reading image…" : "Upload frame overlay"}</Button>
+            </div>
+          </details>
+        </div>
         <input ref={frameInputRef} type="file" accept="image/png,image/webp" className="sr-only" tabIndex={-1} aria-label="Upload a transparent frame" onChange={(event) => { void uploadFrame(event); }} />
         <div className="frame-carousel">{library.frames.map((frame) => <button key={frame.id} type="button" className="frame-card" aria-label={compareMode ? `Compare ${frame.name}` : `Try ${frame.name}`} aria-pressed={compareMode ? compareIds.includes(frame.id) : library.selected?.id === frame.id}
           disabled={busy || importing} onClick={() => { if (compareMode) { setCompareIds((current) => current.includes(frame.id) ? current.filter((id) => id !== frame.id) : current.length < 2 ? [...current, frame.id] : current); return; } library.select(frame.id); if (publicSession) void trackTryOnEvent(publicSession, "FRAME_SELECTED", frame.id).catch(() => undefined); resetFit(); setNotice(""); setConfirmRemoval(false); }}>

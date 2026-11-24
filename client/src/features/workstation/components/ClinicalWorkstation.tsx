@@ -12,16 +12,11 @@ import {
   CheckCircle2,
   ClipboardCheck,
   CreditCard,
-  Eye,
-  Glasses,
   Laptop,
-  Layers,
   Package,
   Printer,
   Receipt,
   Search,
-  ShieldCheck,
-  Sparkles,
   Star,
   UserCheck,
   UserPlus,
@@ -268,7 +263,7 @@ export function ClinicalWorkstation() {
 
   const handleTransferToPos = async (variantId: string) => {
     if (!activeSession) return;
-    const corrId = `corr-${Date.now()}`;
+    const corrId = `corr-${globalThis.crypto.randomUUID().slice(0, 8)}`;
     const updated = services.trialService.finalizeSelectionForPos(
       ctx,
       activeSession.id,
@@ -413,11 +408,11 @@ export function ClinicalWorkstation() {
         <nav aria-label="Assisted workflow stages" className="flex flex-wrap items-center gap-2">
           {(
             [
-              { id: 'PATIENT', label: '1. Patient & Rx', icon: UserCheck },
-              { id: 'TRIAL', label: '2. Frame Catalog & Live Try-On', icon: Camera },
-              { id: 'COMFORT', label: '3. Physical Comfort Check', icon: ClipboardCheck },
-              { id: 'POS', label: '4. Optical POS & Lenses', icon: CreditCard },
-              { id: 'INVOICE', label: '5. Invoice & Event Outbox', icon: Receipt },
+              { id: 'PATIENT', label: '1. Find Patient', icon: UserCheck },
+              { id: 'TRIAL', label: '2. Try Frames', icon: Camera },
+              { id: 'COMFORT', label: '3. Fit & Comfort', icon: ClipboardCheck },
+              { id: 'POS', label: '4. Checkout (POS)', icon: CreditCard },
+              { id: 'INVOICE', label: '5. Receipt', icon: Receipt },
             ] as const
           ).map((item) => {
             const Icon = item.icon;
@@ -441,9 +436,9 @@ export function ClinicalWorkstation() {
         </nav>
 
         {/* Live Centre KPIs */}
-        <div className="flex flex-wrap items-center gap-4 text-xs">
+        <div className="flex flex-wrap items-center gap-3 text-xs">
           <div className="px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200">
-            <span className="text-slate-500">Centre Sales: </span>
+            <span className="text-slate-500">Today&apos;s Sales: </span>
             <strong className="text-slate-900">
               NPR {centreReport.grossRevenue.toLocaleString()}
             </strong>
@@ -451,14 +446,6 @@ export function ClinicalWorkstation() {
           <div className="px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200">
             <span className="text-slate-500">Trials: </span>
             <strong className="text-slate-900">{centreReport.trialsStarted}</strong>
-          </div>
-          <div className="px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800">
-            <span>Conversion: </span>
-            <strong>{centreReport.trialToSaleConversionRate}%</strong>
-          </div>
-          <div className="px-3 py-1.5 rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-800">
-            <span>Outbox Events: </span>
-            <strong>{outboxEvents.length}</strong>
           </div>
         </div>
       </div>
@@ -1261,13 +1248,13 @@ export function ClinicalWorkstation() {
               )}
             </div>
 
-            {/* Transactional Outbox / RabbitMQ Domain Event Log */}
-            <div className="lg:col-span-6 bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-4">
-              <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                <Activity className="w-5 h-5 text-indigo-600" />
-                Transactional Outbox &amp; RabbitMQ Domain Events ({outboxEvents.length})
-              </h2>
-              <div className="space-y-2.5 max-h-[420px] overflow-y-auto">
+            {/* Technical Event Log (Collapsible for clean staff UI) */}
+            <details className="lg:col-span-6 bg-white rounded-2xl border border-slate-200 p-6 shadow-xs">
+              <summary className="cursor-pointer text-sm font-bold text-slate-900 flex items-center gap-2">
+                <Activity className="w-4 h-4 text-indigo-600" />
+                System Activity Log ({outboxEvents.length} events)
+              </summary>
+              <div className="space-y-2.5 max-h-[380px] overflow-y-auto mt-4">
                 {outboxEvents.map((record) => (
                   <div
                     key={record.id}
@@ -1276,20 +1263,16 @@ export function ClinicalWorkstation() {
                     <div className="flex items-center justify-between">
                       <span className="font-bold text-indigo-700">{record.event.eventType}</span>
                       <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10px] font-bold">
-                        {record.status} (attempts: {record.attempts})
+                        {record.status}
                       </span>
                     </div>
-                    <p className="text-[11px] text-slate-500">
-                      Producer: {record.event.producerService} · Tenant: {record.event.tenantId} ·
-                      Corr: {record.event.correlationId}
-                    </p>
                     <pre className="text-[11px] text-slate-700 overflow-x-auto bg-white p-2 rounded border border-slate-200">
                       {JSON.stringify(record.event.payload, null, 2)}
                     </pre>
                   </div>
                 ))}
               </div>
-            </div>
+            </details>
           </div>
         )}
       </main>

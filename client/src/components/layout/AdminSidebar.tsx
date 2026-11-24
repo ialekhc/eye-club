@@ -15,15 +15,15 @@ import {
 
 export function AdminSidebar({ currentPath }: { currentPath: string }) {
   const links = [
-    { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
-    { name: 'Clinical Workstation', href: '/workstation', icon: MonitorSmartphone },
-    { name: 'Microservices', href: '/admin/microservices', icon: Network },
-    { name: 'SaaS Vendors', href: '/admin/vendors', icon: Building2 },
-    { name: 'Optical POS', href: '/pos', icon: MonitorSmartphone },
+    { name: 'Overview', href: '/admin', icon: LayoutDashboard },
+    { name: 'Frames & Photos', href: '/admin/catalog', icon: Box },
     { name: 'Orders', href: '/admin/orders', icon: ShoppingCart },
-    { name: 'Catalog', href: '/admin/catalog', icon: Box },
-    { name: 'Try-on analytics', href: '/admin/analytics', icon: Users },
-    { name: 'Widget setup', href: '/admin/widget', icon: Settings },
+    { name: 'POS Counter', href: '/pos', icon: MonitorSmartphone },
+    { name: 'Workstation', href: '/workstation', icon: MonitorSmartphone },
+    { name: 'Vendors & Stores', href: '/admin/vendors', icon: Building2 },
+    { name: 'Analytics', href: '/admin/analytics', icon: Users },
+    { name: 'Widget Setup', href: '/admin/widget', icon: Settings },
+    { name: 'System Services', href: '/admin/microservices', icon: Network },
   ];
 
   return (
