@@ -42,32 +42,30 @@
 }
 
 :root {
-  --background: #F8FAFA;
-  --foreground: #172126;
-  
-  /* Eye-Club Premium Dark Teal / Obsidian */
-  --primary: #0F2D38;
-  --primary-foreground: #FFFFFF;
-  
-  /* Sleek Emerald / Teal */
-  --secondary: #27666A;
-  --secondary-foreground: #FFFFFF;
-  
-  /* Luxe Gold / Champagne */
-  --accent: #E0B472;
-  --accent-foreground: #172126;
-  
-  --muted: #EEF2F4;
-  --muted-foreground: #6A7A82;
-  
-  --border: #DFE7EA;
-  --input: #DFE7EA;
-  --ring: #0F2D38;
-  
-  --success: #2A8C61;
-  --error: #D04147;
+  /* Untitled UI + shadcn/ui Neutral & Clinical Teal Palette */
+  --background: #F9FAFB;
+  --foreground: #101828;
 
-  --radius: 16px;
+  --primary: #0F766E;
+  --primary-foreground: #FFFFFF;
+
+  --secondary: #F2F4F7;
+  --secondary-foreground: #344054;
+
+  --accent: #F0FDFA;
+  --accent-foreground: #0F766E;
+
+  --muted: #F2F4F7;
+  --muted-foreground: #475467;
+
+  --border: #EAECF0;
+  --input: #D0D5DD;
+  --ring: #0D9488;
+
+  --success: #079455;
+  --error: #D92D20;
+
+  --radius: 12px;
 }
 
 @layer base {
@@ -77,14 +75,9 @@
   body {
     background-color: var(--background);
     color: var(--foreground);
-    font-family: var(--font-sans), sans-serif;
+    font-family: var(--font-inter), var(--font-sans), ui-sans-serif, system-ui, -apple-system, sans-serif;
     -webkit-font-smoothing: antialiased;
-    /* Soft premium gradient background */
-    background-image: 
-      radial-gradient(at 0% 0%, hsla(180, 20%, 96%, 1) 0, transparent 50%), 
-      radial-gradient(at 50% 0%, hsla(40, 40%, 95%, 1) 0, transparent 50%), 
-      radial-gradient(at 100% 0%, hsla(200, 30%, 96%, 1) 0, transparent 50%);
-    background-attachment: fixed;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 }
 

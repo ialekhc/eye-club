@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
+import { Inter } from "next/font/google";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import "./globals.css";
+
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
 
 export const metadata: Metadata = {
@@ -34,8 +37,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className="antialiased min-h-screen bg-background text-foreground flex flex-col">
+    <html lang="en" className={inter.variable}>
+      <body className="antialiased min-h-screen bg-[#F9FAFB] text-[#101828] flex flex-col">
         <AuthProvider>
           <Header />
           <main className="flex-1">{children}</main>

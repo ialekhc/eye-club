@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "exports": {
-    ".": "./src/button.tsx"
+    ".": "./src/index.ts",
+    "./utils": "./src/utils.ts"
   },
   "dependencies": {
     "class-variance-authority": "0.7.1",
